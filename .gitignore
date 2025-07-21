@@ -1,17 +1,62 @@
-target/
-pom.xml.tag
-pom.xml.releaseBackup
-pom.xml.versionsBackup
-pom.xml.next
-release.properties
-dependency-reduced-pom.xml
-buildNumber.properties
-.mvn/timing.properties
-# https://maven.apache.org/wrapper/#usage-without-binary-jar
-.mvn/wrapper/maven-wrapper.jar
+# =========================
+# Visual Studio Code
+# =========================
+.vscode/
+.history/
+.devcontainer/
+*.code-workspace
 
-# Eclipse m2e generated files
-# Eclipse Core
-.project
-# JDT-specific (Eclipse Java Development Tools)
-.classpath
+# =========================
+# Java & Maven
+# =========================
+
+# Build output
+/target/
+**/target/
+
+# Class files
+*.class
+
+# Logs
+*.log
+
+# Generated files
+*.war
+*.ear
+*.jar
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.swp
+*.swo
+
+# MacOS system files
+.DS_Store
+
+# Windows system files
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Environment files
+.env
+*.env
+
+# IDE-specific (optional, puoi aggiungerli se in futuro usi IntelliJ o Eclipse)
+# .idea/
+# .project
+# .classpath
+# .settings/
+
+# Test coverage
+coverage/
+*.exec
+jacoco.exec
+
+# Maven wrapper files
+.mvn/
+!**/src/**/.mvn/
+mvnw
+mvnw.cmd
