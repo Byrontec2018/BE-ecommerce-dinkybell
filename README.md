@@ -43,5 +43,5 @@ A handcrafted, custom-built e-commerce platform developed in **Java + Spring Boo
 
 ### Clone the repository
 ```bash
-git clone https://github.com/your-username/ecommerce-dinkybell.git
-cd ecommerce-dinkybell
+git clone https://github.com/your-username/BE-ecommerce-dinkybell.git
+cd BE-ecommerce-dinkybell
