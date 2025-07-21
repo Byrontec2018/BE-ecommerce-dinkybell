@@ -1,33 +1,62 @@
-HELP.md
-target/
-.mvn/wrapper/maven-wrapper.jar
-!**/src/main/**/target/
-!**/src/test/**/target/
-
-### STS ###
-.apt_generated
-.classpath
-.factorypath
-.project
-.settings
-.springBeans
-.sts4-cache
-
-### IntelliJ IDEA ###
-.idea
-*.iws
-*.iml
-*.ipr
-
-### NetBeans ###
-/nbproject/private/
-/nbbuild/
-/dist/
-/nbdist/
-/.nb-gradle/
-build/
-!**/src/main/**/build/
-!**/src/test/**/build/
-
-### VS Code ###
+# =========================
+# Visual Studio Code
+# =========================
 .vscode/
+.history/
+.devcontainer/
+*.code-workspace
+
+# =========================
+# Java & Maven
+# =========================
+
+# Build output
+/target/
+**/target/
+
+# Class files
+*.class
+
+# Logs
+*.log
+
+# Generated files
+*.war
+*.ear
+*.jar
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.swp
+*.swo
+
+# MacOS system files
+.DS_Store
+
+# Windows system files
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Environment files
+.env
+*.env
+
+# IDE-specific (optional, puoi aggiungerli se in futuro usi IntelliJ o Eclipse)
+# .idea/
+# .project
+# .classpath
+# .settings/
+
+# Test coverage
+coverage/
+*.exec
+jacoco.exec
+
+# Maven wrapper files
+.mvn/
+!**/src/**/.mvn/
+mvnw
+mvnw.cmd
