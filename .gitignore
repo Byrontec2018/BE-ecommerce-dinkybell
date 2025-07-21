@@ -46,8 +46,6 @@ Desktop.ini
 .env
 *.env
 !.env.example
-.sh
-*.sh
 
 # Application Configuration
 src/main/resources/application.yml
@@ -85,8 +83,6 @@ jacoco.exec
 # Maven wrapper files
 .mvn/
 !**/src/**/.mvn/
-mvnw
-mvnw.cmd
 
 # Keystore files
 *.keystore
