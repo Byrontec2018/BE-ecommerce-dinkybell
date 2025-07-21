@@ -61,25 +61,25 @@ Copia
 Modifica
 ./mvnw spring-boot:run
 
-🔐 Authentication & Security
+## 🔐 Authentication & Security
 Protected endpoints require a valid JWT token
 Custom login flow via Spring Security
 Role-based access: USER, ADMIN
 
-📚 API Documentation
+## 📚 API Documentation
 Available via Swagger at:
 bash
 Copia
 Modifica
 http://localhost:8080/swagger-ui/index.html
 
-✍️ Blog Section
+## ✍️ Blog Section
 Integrated blog system with full CRUD functionality, image support, and author metadata.
 
-🧾 License
+## 🧾 License
 This project is released under a Proprietary License.
 All rights reserved © 2025 Byrontec by Stefano D’Incà (dinkybell).
 For permissions or enquiries, please contact: stefano.dinca@byrontec.com
 
-💡 Final Notes
+## 💡 Final Notes
 This is an ongoing full-stack project. The backend is built with Spring Boot, and the REST API is fully prepared for integration with a future React frontend.
