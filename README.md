@@ -61,6 +61,8 @@ Copia
 Modifica
 ./mvnw spring-boot:run
 
+---
+
 ## 🔐 Authentication & Security
 Protected endpoints require a valid JWT token
 Custom login flow via Spring Security
