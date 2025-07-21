@@ -1,10 +1,64 @@
-HELP.md
-target/
-.mvn/wrapper/maven-wrapper.jar
+# =========================
+# Visual Studio Code
+# =========================
+.vscode/
+.history/
+.devcontainer/
+*.code-workspace
+
+# =========================
+# Java & Maven
+# =========================
+
+# Build output
+/target/
+**/target/
 !**/src/main/**/target/
 !**/src/test/**/target/
 
-### STS ###
+# Class files
+*.class
+
+# Logs
+*.log
+
+# Generated files
+*.war
+*.ear
+*.jar
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.swp
+*.swo
+
+# MacOS system files
+.DS_Store
+
+# Windows system files
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Environment & Bash files
+.env
+*.env
+!.env.example
+.sh
+*.sh
+
+# Application Configuration
+src/main/resources/application.yml
+src/main/resources/application*.properties
+!src/main/resources/application.yml.example
+
+# IDE-specific
+.idea/
+*.iws
+*.iml
+*.ipr
 .apt_generated
 .classpath
 .factorypath
@@ -13,14 +67,8 @@ target/
 .springBeans
 .sts4-cache
 
-### IntelliJ IDEA ###
-.idea
-*.iws
-*.iml
-*.ipr
-
-### NetBeans ###
-/nbproject/private/
+# NetBeans
+/nbproject/
 /nbbuild/
 /dist/
 /nbdist/
@@ -29,5 +77,20 @@ build/
 !**/src/main/**/build/
 !**/src/test/**/build/
 
-### VS Code ###
-.vscode/
+# Test coverage
+coverage/
+*.exec
+jacoco.exec
+
+# Maven wrapper files
+.mvn/
+!**/src/**/.mvn/
+mvnw
+mvnw.cmd
+
+# Keystore files
+*.keystore
+*.jceks
+
+# Backup and git
+backup-repo/
