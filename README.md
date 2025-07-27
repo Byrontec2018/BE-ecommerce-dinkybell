@@ -21,7 +21,7 @@ A handcrafted, custom-built e-commerce platform developed in **Java + Spring Boo
 
 | Component         | Technology                 |
 |-------------------|----------------------------|
-| Backend           | Java 17                    |
+| Backend           | Java 21                    |
 | Framework         | Spring Boot 3, Spring MVC  |
 | Security          | Spring Security, JWT       |
 | Database          | MySQL 8                    |
