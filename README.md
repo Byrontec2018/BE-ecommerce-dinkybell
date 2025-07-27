@@ -36,7 +36,7 @@ A handcrafted, custom-built e-commerce platform developed in **Java + Spring Boo
 ## ⚙️ Project Setup
 
 ### Prerequisites
-- Java JDK 17+
+- Java JDK 21+
 - Maven 3.x
 - MySQL Server
 - Visual Studio Code with Java extensions
