@@ -16,7 +16,7 @@ import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import jakarta.validation.constraints.Email;
-// import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -37,11 +37,10 @@ public class Authentication {
     @JoinColumn(name = "user_id", referencedColumnName = "id", nullable = false)
     private User user;
 
-    // Username field is commented out as per the context provided
-    // @Column(length = 20, nullable = false, unique = true)
-    // @Size(min = 3, max = 20)
-    // @Pattern(regexp = "^[a-zA-Z0-9_]+$")
-    // private String username;
+    @Column(length = 20, nullable = true, unique = true)
+    @Size(min = 3, max = 20)
+    @Pattern(regexp = "^[a-zA-Z0-9_]+$")
+    private String username;
 
     @Column(length = 255, nullable = false, unique = true)
     @Email
