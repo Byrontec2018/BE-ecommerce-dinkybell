@@ -3,10 +3,8 @@ package com.dinkybell.ecommerce.services;
 import java.time.LocalDateTime;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.task.TaskExecutionProperties.Simple;
 import org.springframework.http.ResponseEntity;
 import org.springframework.mail.SimpleMailMessage;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import com.dinkybell.ecommerce.entities.Authentication;
 import com.dinkybell.ecommerce.repositories.AuthenticationRepository;
@@ -29,7 +27,7 @@ public class AuthenticationService {
         // Create hashed password
         String hashedPassword = passwordEncoder.encode(password);
 
-        // Generate reset token
+        // Generate confirm e-mail token
         String resetToken = UUID.randomUUID().toString();
 
         Authentication userAuthentication = new Authentication();
@@ -44,8 +42,7 @@ public class AuthenticationService {
 
         if (savedUser != null && savedUser.getId() != null) {
             // Send confirmation email
-            String appUrl = "http://localhost:8080"; // Replace with your actual app URL
-            sendConfirmationEmail(savedUser, appUrl, resetToken);
+            sendConfirmationEmail(savedUser, resetToken);
             // Return success response
             return ResponseEntity.ok("User registered successfully");
         } else {
@@ -55,10 +52,9 @@ public class AuthenticationService {
 
     }
 
-    public void sendConfirmationEmail(Authentication authentication, String appUrl,
-            String resetToken) {
+    public void sendConfirmationEmail(Authentication authentication, String resetToken) {
         // Generate confirmation link
-        String confirmationLink = appUrl + "/confirm-email?token=" + resetToken;
+        String confirmationLink = "http://localhost:8080/confirm-email?token=" + resetToken;
 
         // Use JavaMailSender to send the email with the link
         SimpleMailMessage message = new SimpleMailMessage();
@@ -67,6 +63,24 @@ public class AuthenticationService {
         message.setText(
                 "Please confirm your email by clicking the following link: " + confirmationLink);
 
+    }
+
+    public ResponseEntity<?> confirmEmail(String resetToken) {
+        // Find user by reset token
+        Authentication authentication = authenticationRepository.findByResetToken(resetToken);
+        if (authentication == null
+                || authentication.getResetTokenExpiry().isBefore(LocalDateTime.now())) {
+            return ResponseEntity.badRequest().body("Invalid or expired token");
+        }
+
+        // Confirm email
+        authentication.setEnabled(true);
+        authentication.setEmailConfirmedAt(LocalDateTime.now());
+        authentication.setResetToken(null); // Clear reset token after confirmation
+        authentication.setResetTokenExpiry(null); // Clear reset token expiry
+        authenticationRepository.save(authentication);
+
+        return ResponseEntity.ok("Email confirmed successfully");
     }
 
 }
