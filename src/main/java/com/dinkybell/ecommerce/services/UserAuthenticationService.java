@@ -6,13 +6,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import com.dinkybell.ecommerce.entities.Authentication;
-import com.dinkybell.ecommerce.repositories.AuthenticationRepository;
+import com.dinkybell.ecommerce.entities.UserAuthentication;
+import com.dinkybell.ecommerce.repositories.UserAuthenticationRepository;
 
-public class AuthenticationService {
+public class UserAuthenticationService {
 
     @Autowired
-    AuthenticationRepository authenticationRepository;
+    UserAuthenticationRepository authenticationRepository;
 
     @Autowired
     PasswordEncoder passwordEncoder;
@@ -30,7 +30,7 @@ public class AuthenticationService {
         // Generate confirm e-mail token
         String resetToken = UUID.randomUUID().toString();
 
-        Authentication userAuthentication = new Authentication();
+        UserAuthentication userAuthentication = new UserAuthentication();
         userAuthentication.setEmail(email);
         userAuthentication.setPassword(hashedPassword);
         userAuthentication.setResetToken(resetToken);
@@ -38,7 +38,7 @@ public class AuthenticationService {
                                                                                      // expiry to 15
                                                                                      // minutes
 
-        Authentication savedUser = authenticationRepository.save(userAuthentication);
+        UserAuthentication savedUser = authenticationRepository.save(userAuthentication);
 
         if (savedUser != null && savedUser.getId() != null) {
             // Send confirmation email
@@ -52,7 +52,7 @@ public class AuthenticationService {
 
     }
 
-    public void sendConfirmationEmail(Authentication authentication, String resetToken) {
+    public void sendConfirmationEmail(UserAuthentication authentication, String resetToken) {
         // Generate confirmation link
         String confirmationLink = "http://localhost:8080/confirm-email?token=" + resetToken;
 
@@ -67,7 +67,7 @@ public class AuthenticationService {
 
     public ResponseEntity<?> confirmEmail(String resetToken) {
         // Find user by reset token
-        Authentication authentication = authenticationRepository.findByResetToken(resetToken);
+        UserAuthentication authentication = authenticationRepository.findByResetToken(resetToken);
         if (authentication == null
                 || authentication.getResetTokenExpiry().isBefore(LocalDateTime.now())) {
             return ResponseEntity.badRequest().body("Invalid or expired token");
@@ -81,6 +81,37 @@ public class AuthenticationService {
         authenticationRepository.save(authentication);
 
         return ResponseEntity.ok("Email confirmed successfully");
+    }
+
+    public ResponseEntity<?> login(String email, String password) {
+        // Find user by email
+        UserAuthentication authentication =
+                authenticationRepository.findByEmail(email).orElse(null);
+        if (authentication == null) {
+            return ResponseEntity.badRequest().body("Invalid email or password");
+        }
+
+        // Check password
+        if (!passwordEncoder.matches(password, authentication.getPassword())) {
+            return ResponseEntity.badRequest().body("Invalid email or password");
+        }
+
+        // Check if email is confirmed
+        if (!authentication.isEnabled()) {
+            return ResponseEntity.badRequest().body("Email not confirmed");
+        }
+
+        // Set last login time
+        authentication.setLastLogin(LocalDateTime.now());
+
+        // Generate JWT token
+        // .........
+
+        // Save user
+        authenticationRepository.save(authentication);
+
+        // Return success response - RETURN JWT TOKEN HERE
+        return ResponseEntity.ok("Login successful");
     }
 
 }
