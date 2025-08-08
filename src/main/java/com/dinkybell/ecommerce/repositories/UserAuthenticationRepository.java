@@ -10,6 +10,6 @@ public interface UserAuthenticationRepository extends JpaRepository<UserAuthenti
 
     boolean existsByEmail(String email);
 
-    UserAuthentication findByResetToken(String resetToken);
+    UserAuthentication findByEmailConfirmToken(String resetToken);
 
 }

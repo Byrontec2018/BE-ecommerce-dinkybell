@@ -40,9 +40,11 @@ Thumbs.db
 ehthumbs.db
 Desktop.ini
 
-# Environment files
+# Environment & Bash files
 .env
 *.env
+.sh
+*.sh
 
 # IDE-specific (optional, puoi aggiungerli se in futuro usi IntelliJ o Eclipse)
 # .idea/
