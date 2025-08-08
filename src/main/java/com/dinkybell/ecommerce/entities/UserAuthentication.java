@@ -2,7 +2,7 @@ package com.dinkybell.ecommerce.entities;
 
 import java.time.LocalDateTime;
 import com.dinkybell.ecommerce.enums.Role;
-import jakarta.persistence.CascadeType;
+// import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -10,8 +10,8 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.OneToOne;
+// import jakarta.persistence.JoinColumn;
+// import jakarta.persistence.OneToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
@@ -24,7 +24,8 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Data
 @Entity
-@Table(name = "authentications", uniqueConstraints = {@UniqueConstraint(columnNames = {"email"})})
+@Table(name = "users_authentication",
+        uniqueConstraints = {@UniqueConstraint(columnNames = {"email"})})
 // @UniqueConstraint(columnNames = {"username"})})
 
 public class UserAuthentication {
@@ -33,9 +34,9 @@ public class UserAuthentication {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @OneToOne(cascade = CascadeType.ALL)
-    @JoinColumn(name = "user_id", referencedColumnName = "id", nullable = false)
-    private User user;
+    // @OneToOne(cascade = CascadeType.ALL)
+    // @JoinColumn(name = "user_id", referencedColumnName = "id", nullable = true)
+    // private User user;
 
     @Column(length = 20, nullable = true, unique = true)
     @Size(min = 3, max = 20)
@@ -66,11 +67,11 @@ public class UserAuthentication {
     @Column(name = "last_login")
     private LocalDateTime lastLogin;
 
-    @Column(name = "reset_token")
-    private String resetToken;
+    @Column(name = "email_confirm_token")
+    private String emailConfirmToken;
 
-    @Column(name = "reset_token_expiry")
-    private LocalDateTime resetTokenExpiry;
+    @Column(name = "email_confirm_token_expiry")
+    private LocalDateTime emailConfirmTokenExpiry;
 
     @PrePersist
     protected void onCreate() {
