@@ -80,8 +80,8 @@ public class UserAuthenticationService {
 
         try {
             // Generate confirmation link
-            String confirmationLink =
-                    "http://192.162.1.108:8080/confirm-email?token=" + emailConfirmToken;
+            String confirmationLink = "https://192.162.1.108:8080/api/v1/auth/confirm-email?token="
+                    + emailConfirmToken;
 
             // Use JavaMailSender to send the email with the link
             SimpleMailMessage message = new SimpleMailMessage();
