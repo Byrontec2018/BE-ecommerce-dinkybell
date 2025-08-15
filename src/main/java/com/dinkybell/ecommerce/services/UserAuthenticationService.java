@@ -1,28 +1,58 @@
 package com.dinkybell.ecommerce.services;
 
 import java.time.LocalDateTime;
+import java.util.Date;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import com.dinkybell.ecommerce.dtos.JwtResponseDTO;
 import com.dinkybell.ecommerce.entities.UserAuthentication;
 import com.dinkybell.ecommerce.repositories.UserAuthenticationRepository;
+import com.dinkybell.ecommerce.utils.JwtUtil;
 
+/**
+ * Service responsible for authentication operations including user registration, email
+ * confirmation, and login with JWT token generation.
+ * 
+ * This service manages the complete authentication flow for users in the Dinkybell e-commerce
+ * platform, including: - User registration with email verification - Password hashing and security
+ * - Email confirmation process - JWT-based authentication - Login tracking
+ */
 @Service
 public class UserAuthenticationService {
 
+    /** Repository for accessing and managing user authentication data */
     @Autowired
     UserAuthenticationRepository authenticationRepository;
 
+    /** Encoder for hashing and validating passwords */
     @Autowired
     PasswordEncoder passwordEncoder;
 
+    /** Service for sending email notifications */
     @Autowired
     private JavaMailSender mailSender;
 
+    /** Utility for JWT token generation and validation */
+    @Autowired
+    private JwtUtil jwtUtil;
+
+    /** JWT token expiration time in milliseconds from application properties */
+    @Value("${jwt.expiration}")
+    private long jwtExpiration;
+
+    /**
+     * Registers a new user in the system with email and password.
+     * 
+     * @param email The email address of the user
+     * @param password The plain text password (will be hashed before storage)
+     * @return ResponseEntity with success message or error details
+     */
     public ResponseEntity<?> registerUser(String email, String password) {
 
         // Check if email already exists
@@ -30,128 +60,171 @@ public class UserAuthenticationService {
             return ResponseEntity.badRequest().body("Email already exists");
         }
 
-        // Create hashed password
+        // Create hashed password using BCrypt
         String hashedPassword = passwordEncoder.encode(password);
 
-        // Generate confirm e-mail token
+        // Generate secure random token for email confirmation
         String emailConfirmToken = UUID.randomUUID().toString();
 
+        // Create new user authentication entity
         UserAuthentication userAuthentication = new UserAuthentication();
         userAuthentication.setEmail(email);
         userAuthentication.setPassword(hashedPassword);
         userAuthentication.setEmailConfirmToken(emailConfirmToken);
-        userAuthentication.setEmailConfirmTokenExpiry(LocalDateTime.now().plusMinutes(15)); // Set
-                                                                                            // token
-                                                                                            // expiry
-                                                                                            // to 15
+        userAuthentication.setEmailConfirmTokenExpiry(LocalDateTime.now().plusMinutes(15)); // Token
+                                                                                            // expires
+                                                                                            // after
+                                                                                            // 15
                                                                                             // minutes
 
         try {
-
+            // Persist user to database
             UserAuthentication savedUser = authenticationRepository.save(userAuthentication);
 
+            // Verify user was saved successfully
             if (savedUser != null && savedUser.getId() != null) {
 
-                // Send confirmation email
+                // Send confirmation email with verification link
                 String messageResponse = sendConfirmationEmail(savedUser, emailConfirmToken);
 
+                // Check if email sending failed
                 if (messageResponse.contains("Error")) {
                     return ResponseEntity.badRequest().body(messageResponse);
                 }
 
-                // Return success response
+                // Return success response with instructions
                 return ResponseEntity.ok(
                         "Please confirm your email, check your inbox for the confirmation link.");
             } else {
-                // Return error response
+                // Database save failed without exception
                 return ResponseEntity.status(500).body("Registration failed");
             }
 
         } catch (Exception e) {
-
+            // Log the exception for debugging purposes
             e.printStackTrace();
             return ResponseEntity.status(500).body("Registration failed: " + e.getMessage());
         }
 
     }
 
+    /**
+     * Sends a confirmation email to the user with a verification link.
+     * 
+     * @param authentication The user authentication entity
+     * @param emailConfirmToken The token for email verification
+     * @return Success message or error details
+     */
     public String sendConfirmationEmail(UserAuthentication authentication,
             String emailConfirmToken) {
 
         try {
-            // Generate confirmation link
+            // Generate secure HTTPS confirmation link with token
             String confirmationLink = "https://192.162.1.108:8080/api/v1/auth/confirm-email?token="
                     + emailConfirmToken;
 
-            // Use JavaMailSender to send the email with the link
+            // Create email message with verification link
             SimpleMailMessage message = new SimpleMailMessage();
             message.setFrom("support@dinkybell.com");
             message.setTo(authentication.getEmail());
             message.setSubject("Email Confirmation");
             message.setText("Please confirm your email by clicking the following link: "
                     + confirmationLink);
-            // Send the email
+
+            // Send the email through configured mail server
             mailSender.send(message);
-            System.out.println("E-mail inviata correttamente");
+            System.out.println("Email sent successfully");
             return "Confirmation email sent successfully";
         } catch (org.springframework.mail.MailAuthenticationException e) {
+            // Handle authentication failures (wrong username/password)
             return "Error: Email authentication failed - check email credentials";
         } catch (org.springframework.mail.MailSendException e) {
+            // Handle SMTP configuration issues
             return "Error: Could not send email - check SMTP configuration";
         } catch (Exception e) {
+            // Handle other unexpected errors
             return "Error sending confirmation email: " + e.getMessage();
         }
 
     }
 
+    /**
+     * Confirms a user's email using the token sent via email.
+     * 
+     * @param emailConfirmToken The verification token
+     * @return ResponseEntity with success message or error details
+     */
     public ResponseEntity<?> confirmEmail(String emailConfirmToken) {
-        // Find user by reset token
+        // Find user by confirmation token
         UserAuthentication authentication =
                 authenticationRepository.findByEmailConfirmToken(emailConfirmToken);
+
+        // Check if token exists and is not expired
         if (authentication == null
                 || authentication.getEmailConfirmTokenExpiry().isBefore(LocalDateTime.now())) {
             return ResponseEntity.badRequest().body("Invalid or expired token");
         }
 
-        // Confirm email
-        authentication.setEnabled(true);
-        authentication.setEmailConfirmedAt(LocalDateTime.now());
-        authentication.setEmailConfirmToken(null); // Clear reset token after confirmation
-        authentication.setEmailConfirmTokenExpiry(null); // Clear reset token expiry
+        // Update user as verified
+        authentication.setEnabled(true); // Enable the account
+        authentication.setEmailConfirmedAt(LocalDateTime.now()); // Record confirmation time
+        authentication.setEmailConfirmToken(null); // Clear token for security
+        authentication.setEmailConfirmTokenExpiry(null); // Clear expiry time
+
+        // Save changes to database
         authenticationRepository.save(authentication);
 
         return ResponseEntity.ok("Email confirmed successfully");
     }
 
-    public ResponseEntity<?> login(String email, String password) {
-        // Find user by email
-        UserAuthentication authentication =
-                authenticationRepository.findByEmail(email).orElse(null);
-        if (authentication == null) {
-            return ResponseEntity.badRequest().body("Invalid email or password");
+    /**
+     * Authenticates a user and generates a JWT token for authorized access.
+     * 
+     * @param email User's email address
+     * @param password User's password (plain text)
+     * @return ResponseEntity containing JWT token or error message
+     */
+    public ResponseEntity<?> loginUser(String email, String password) {
+        try {
+            // Retrieve user from database by email
+            UserAuthentication authentication =
+                    authenticationRepository.findByEmail(email).orElse(null);
+
+            // Check if user exists
+            if (authentication == null) {
+                return ResponseEntity.badRequest().body("Invalid email or password");
+            }
+
+            // Verify password matches stored hash
+            if (!passwordEncoder.matches(password, authentication.getPassword())) {
+                return ResponseEntity.badRequest().body("Invalid email or password");
+            }
+
+            // Ensure email has been confirmed
+            if (!authentication.isEnabled()) {
+                return ResponseEntity.badRequest().body("Email not confirmed");
+            }
+
+            // Generate JWT token with RS256 algorithm
+            String token = jwtUtil.generateToken(authentication);
+
+            // Record the login timestamp
+            authentication.setLastLogin(LocalDateTime.now());
+
+            // Update user record with login time
+            authenticationRepository.save(authentication);
+
+            // Get token expiration date from the token itself
+            Date tokenExpirationTime = jwtUtil.extractExpirationDate(token);
+
+            // Return JWT token and relevant information
+            return ResponseEntity
+                    .ok(new JwtResponseDTO(token, authentication.getEmail(), tokenExpirationTime));
+        } catch (Exception e) {
+            // Log the error and return generic message
+            e.printStackTrace();
+            return ResponseEntity.status(500).body("Login failed: " + e.getMessage());
         }
-
-        // Check password
-        if (!passwordEncoder.matches(password, authentication.getPassword())) {
-            return ResponseEntity.badRequest().body("Invalid email or password");
-        }
-
-        // Check if email is confirmed
-        if (!authentication.isEnabled()) {
-            return ResponseEntity.badRequest().body("Email not confirmed");
-        }
-
-        // Set last login time
-        authentication.setLastLogin(LocalDateTime.now());
-
-        // Generate JWT token
-        // .........
-
-        // Save user
-        authenticationRepository.save(authentication);
-
-        // Return success response - RETURN JWT TOKEN HERE
-        return ResponseEntity.ok("Login successful");
     }
 
 }
