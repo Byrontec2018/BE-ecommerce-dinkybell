@@ -3,8 +3,11 @@ package com.dinkybell.ecommerce.services;
 import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.UUID;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -26,6 +29,8 @@ import com.dinkybell.ecommerce.utils.JwtUtil;
 @Service
 public class UserAuthenticationService {
 
+    private static final Logger logger = LoggerFactory.getLogger(UserAuthenticationService.class);
+
     /** Repository for accessing and managing user authentication data */
     @Autowired
     UserAuthenticationRepository authenticationRepository;
@@ -45,6 +50,10 @@ public class UserAuthenticationService {
     /** JWT token expiration time in milliseconds from application properties */
     @Value("${jwt.expiration}")
     private long jwtExpiration;
+
+    /** Service for managing blacklisted tokens */
+    @Autowired
+    private TokenBlacklistService tokenBlacklistService;
 
     /**
      * Registers a new user in the system with email and password.
@@ -227,4 +236,57 @@ public class UserAuthenticationService {
         }
     }
 
+    /**
+     * Logs out a user by invalidating their JWT token.
+     * 
+     * This method extracts the JWT ID from the token and adds it to a blacklist, effectively
+     * revoking the token until its natural expiration time.
+     * 
+     * @param token The JWT token to invalidate (in format "Bearer token")
+     * @return ResponseEntity with success or error message
+     */
+    public ResponseEntity<?> logoutUser(String token) {
+        try {
+            // Check if token is provided
+            if (token == null || token.isEmpty()) {
+                return ResponseEntity.badRequest().body("No authentication token provided");
+            }
+
+            // Remove "Bearer " prefix if present
+            if (token.startsWith("Bearer ")) {
+                token = token.substring(7);
+            }
+
+            // Validate token format and signature
+            try {
+                // Extract token claims to verify it's a valid token
+                String jti = jwtUtil.extractJti(token);
+
+                // Check if token is blacklisted
+                if (tokenBlacklistService.isBlacklisted(jti)) {
+                    logger.info("Logout attempt with already invalidated token. JTI: {}", jti);
+                    return ResponseEntity.ok().body("Token was already invalidated");
+                }
+
+                Date expiryDate = jwtUtil.extractExpirationDate(token);
+                String email = jwtUtil.extractEmail(token);
+
+                logger.info("User with email {} is logging out", email);
+
+                // Add token to blacklist
+                tokenBlacklistService.blacklistToken(jti, expiryDate);
+
+                logger.info("Successfully invalidated token for user {}", email);
+                return ResponseEntity.ok().body("Logout successful");
+            } catch (Exception e) {
+                // Token is invalid or already expired
+                logger.warn("Invalid token provided during logout attempt: {}", e.getMessage());
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid token");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Logout failed: " + e.getMessage());
+        }
+    }
 }
