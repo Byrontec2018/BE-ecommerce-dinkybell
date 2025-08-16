@@ -137,6 +137,26 @@ Authenticates a user and returns a JWT token.
 }
 ```
 
+#### Logout
+
+```
+GET /api/v1/auth/logout
+```
+
+Invalidates the current JWT token by adding it to a blacklist.
+
+**Headers:**
+
+```
+Authorization: Bearer eyJhbGciOiJSUzI1NiJ9...
+```
+
+**Response:**
+
+```
+"Logout successful"
+```
+
 ## 🔒 Security Features
 
 - Secure password storage with BCrypt hashing
