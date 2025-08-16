@@ -5,6 +5,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -74,6 +75,21 @@ public class UserAthenticationController {
     public ResponseEntity<?> login(@RequestBody @Valid UserAuthenticationRequestDTO loginRequest) {
         return userAuthenticationService.loginUser(loginRequest.getEmail(),
                 loginRequest.getPassword());
+    }
+
+    /**
+     * Handles user logout requests.
+     * 
+     * This endpoint invalidates the user's JWT token by adding it to a blacklist, preventing
+     * further use of the token until its natural expiration time.
+     * 
+     * @param authHeader The Authorization header containing the JWT token
+     * @return ResponseEntity with success message or error details
+     */
+    @GetMapping("/logout")
+    public ResponseEntity<?> logout(
+            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+        return userAuthenticationService.logoutUser(authHeader);
     }
 
 }
