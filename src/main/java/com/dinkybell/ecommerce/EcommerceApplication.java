@@ -2,6 +2,7 @@ package com.dinkybell.ecommerce;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 /**
  * Main entry point for the Dinkybell Ecommerce application.
@@ -9,8 +10,11 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
  * This Spring Boot application provides a RESTful API for the Dinkybell ecommerce platform. It
  * includes: - User authentication and authorization - Email verification - JWT token-based security
  * - PostgreSQL database integration
+ * 
+ * @EnableScheduling is used to enable scheduling capabilities for the blacklist token cleanup.
  */
 @SpringBootApplication
+@EnableScheduling
 public class EcommerceApplication {
 
 	/**

@@ -10,9 +10,11 @@ import java.util.UUID;
 
 import jakarta.annotation.PostConstruct;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import com.dinkybell.ecommerce.entities.UserAuthentication;
+import com.dinkybell.ecommerce.services.TokenBlacklistService;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -127,16 +129,31 @@ public class JwtUtil {
                 .getBody().getExpiration();
     }
 
+    @Autowired
+    private TokenBlacklistService tokenBlacklistService;
+
     /**
-     * Validates a JWT token by checking signature, expiration and matching email.
+     * Validates a JWT token by checking signature, expiration, matching email, and ensuring it's
+     * not in the blacklist.
      * 
      * @param token The JWT token string to validate
      * @param email The expected email (subject) in the token
      * @return true if the token is valid, false otherwise
      */
     public boolean validateToken(String token, String email) {
-        final String extractedEmail = extractEmail(token);
-        return (extractedEmail.equals(email) && !isTokenExpired(token));
+        try {
+            final String extractedEmail = extractEmail(token);
+            final String jti = extractJti(token);
+
+            // Check if token is blacklisted (was logged out)
+            if (tokenBlacklistService.isBlacklisted(jti)) {
+                return false;
+            }
+
+            return (extractedEmail.equals(email) && !isTokenExpired(token));
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     /**
@@ -167,6 +184,19 @@ public class JwtUtil {
     public Claims getAllClaimsFromToken(String token) {
         return Jwts.parserBuilder().setSigningKey(getPublicKey()).build().parseClaimsJws(token)
                 .getBody();
+    }
+
+    /**
+     * Extracts the JWT ID (jti) from the token.
+     * 
+     * The JTI is a unique identifier for the token that can be used for token revocation.
+     * 
+     * @param token The JWT token string
+     * @return The JWT ID claim value
+     * @throws io.jsonwebtoken.JwtException if token is invalid or malformed
+     */
+    public String extractJti(String token) {
+        return getAllClaimsFromToken(token).getId();
     }
 
 }
