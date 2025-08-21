@@ -1,23 +1,32 @@
 package com.dinkybell.ecommerce.configurations;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 /**
  * Spring Security Configuration.
  * 
- * This class configures the security aspects of the application including: - Password encoding
- * strategy (BCrypt) - HTTP security settings - Authentication mechanisms
- * 
- * Currently configured for development with all requests permitted. For production, this should be
- * updated with proper security rules.
+ * This class configures the security aspects of the application including:
+ * - Password encoding strategy (BCrypt)
+ * - HTTP security settings 
+ * - JWT authentication mechanism
+ * - Authorization rules for endpoints
  */
 @Configuration
+@EnableWebSecurity
 public class SecurityConfig {
+
+    @Autowired
+    private JwtAuthFilter jwtAuthFilter;
 
     /**
      * Creates a password encoder bean for secure password storage.
@@ -35,8 +44,9 @@ public class SecurityConfig {
     /**
      * Configures HTTP security settings for the application.
      * 
-     * Currently permits all requests for development purposes. Disables CSRF protection, HTTP
-     * Basic, and form login as we're using JWT.
+     * Implements JWT-based security with specific endpoint permissions.
+     * Public endpoints are allowed without authentication while protected
+     * endpoints require proper authentication and authorization.
      * 
      * @param http The HttpSecurity to configure
      * @return The built SecurityFilterChain
@@ -44,10 +54,34 @@ public class SecurityConfig {
      */
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http.authorizeHttpRequests(auth -> auth.anyRequest().permitAll())
-                .csrf(csrf -> csrf.disable()).httpBasic(httpBasic -> httpBasic.disable())
-                .formLogin(form -> form.disable()); // Disable form login
+        http
+            // Disable CSRF as we're using stateless JWT authentication
+            .csrf(AbstractHttpConfigurer::disable)
+            
+            // Configure authorization rules
+            .authorizeHttpRequests(auth -> auth
+                // Public endpoints
+                .requestMatchers("/api/v1/auth/**").permitAll()
+                .requestMatchers("/api/v1/public/**").permitAll()
+                .requestMatchers("/actuator/health").permitAll()
+                .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
+                // Protected endpoints
+                .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
+                .anyRequest().authenticated()
+            )
+            
+            // Configure session management to be stateless
+            .sessionManagement(session -> session
+                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+            )
+            
+            // Disable form login and HTTP Basic
+            .httpBasic(AbstractHttpConfigurer::disable)
+            .formLogin(AbstractHttpConfigurer::disable)
+            
+            // Add JWT filter before the standard authentication filter
+            .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+            
         return http.build();
     }
-
 }
