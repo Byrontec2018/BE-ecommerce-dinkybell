@@ -14,6 +14,8 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import com.dinkybell.ecommerce.dtos.JwtResponseDTO;
+import com.dinkybell.ecommerce.dtos.PasswordResetConfirmDTO;
+import com.dinkybell.ecommerce.dtos.PasswordResetRequestDTO;
 import com.dinkybell.ecommerce.entities.UserAuthentication;
 import com.dinkybell.ecommerce.repositories.UserAuthenticationRepository;
 import com.dinkybell.ecommerce.utils.JwtUtil;
@@ -287,6 +289,139 @@ public class UserAuthenticationService {
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Logout failed: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * Initiates the password reset process for a user.
+     * 
+     * @param request DTO containing the user's email address
+     * @return ResponseEntity with success message or error details
+     */
+    public ResponseEntity<?> requestPasswordReset(PasswordResetRequestDTO request) {
+        String email = request.getEmail();
+        logger.info("Password reset requested for email: {}", email);
+        
+        try {
+            // Find user by email
+            UserAuthentication authentication = authenticationRepository.findByEmail(email).orElse(null);
+            
+            if (authentication == null) {
+                // For security reasons, we still return a success message even if the email doesn't exist
+                logger.info("Password reset requested for non-existent email: {}", email);
+                return ResponseEntity.ok("If your email exists in our system, you will receive a password reset link");
+            }
+            
+            // Generate secure random token
+            String resetToken = UUID.randomUUID().toString();
+            
+            // Set token and expiry (15 minutes validity)
+            authentication.setResetPasswordToken(resetToken);
+            authentication.setResetPasswordTokenExpiry(LocalDateTime.now().plusMinutes(15));
+            
+            // Save updates to database
+            authenticationRepository.save(authentication);
+            
+            // Send password reset email
+            String messageResponse = sendPasswordResetEmail(authentication, resetToken);
+            
+            // Check if email sending failed
+            if (messageResponse.contains("Error")) {
+                logger.error("Failed to send password reset email: {}", messageResponse);
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                        .body("Failed to send password reset email. Please try again later.");
+            }
+            
+            // Success response (intentionally vague for security)
+            return ResponseEntity.ok("If your email exists in our system, you will receive a password reset link");
+            
+        } catch (Exception e) {
+            logger.error("Error in password reset request: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Password reset request failed. Please try again later.");
+        }
+    }
+    
+    /**
+     * Sends a password reset email to the user with a reset link.
+     * 
+     * @param authentication The user authentication entity
+     * @param resetToken The token for password reset
+     * @return Success message or error details
+     */
+    private String sendPasswordResetEmail(UserAuthentication authentication, String resetToken) {
+        try {
+            // Generate secure HTTPS reset link with token
+            String resetLink = "https://192.162.1.108:8080/reset-password?token=" + resetToken;
+            
+            // Create email message with reset link
+            SimpleMailMessage message = new SimpleMailMessage();
+            message.setFrom("support@dinkybell.com");
+            message.setTo(authentication.getEmail());
+            message.setSubject("Password Reset Request");
+            message.setText("You recently requested to reset your password. Click the following link to reset it:\n\n" +
+                    resetLink + "\n\n" +
+                    "This link will expire in 15 minutes.\n\n" +
+                    "If you didn't request a password reset, please ignore this email or contact support if you have concerns.");
+            
+            // Send the email through configured mail server
+            mailSender.send(message);
+            logger.info("Password reset email sent successfully to {}", authentication.getEmail());
+            return "Password reset email sent successfully";
+        } catch (org.springframework.mail.MailAuthenticationException e) {
+            logger.error("Email authentication failed during password reset: {}", e.getMessage());
+            return "Error: Email authentication failed - check email credentials";
+        } catch (org.springframework.mail.MailSendException e) {
+            logger.error("Failed to send password reset email - SMTP issue: {}", e.getMessage());
+            return "Error: Could not send email - check SMTP configuration";
+        } catch (Exception e) {
+            logger.error("Unexpected error sending password reset email: {}", e.getMessage(), e);
+            return "Error sending password reset email: " + e.getMessage();
+        }
+    }
+    
+    /**
+     * Validates the reset token and updates the user's password.
+     * 
+     * @param resetData DTO containing the token and new password
+     * @return ResponseEntity with success message or error details
+     */
+    public ResponseEntity<?> resetPassword(PasswordResetConfirmDTO resetData) {
+        try {
+            String token = resetData.getToken();
+            String newPassword = resetData.getNewPassword();
+            
+            // Find user by reset token
+            UserAuthentication authentication = authenticationRepository.findByResetPasswordToken(token);
+            
+            // Check if token exists and is not expired
+            if (authentication == null || 
+                    authentication.getResetPasswordTokenExpiry() == null ||
+                    authentication.getResetPasswordTokenExpiry().isBefore(LocalDateTime.now())) {
+                logger.warn("Invalid or expired password reset token used: {}", token);
+                return ResponseEntity.badRequest().body("Invalid or expired token. Please request a new password reset.");
+            }
+            
+            // Encode the new password
+            String hashedPassword = passwordEncoder.encode(newPassword);
+            
+            // Update the password
+            authentication.setPassword(hashedPassword);
+            
+            // Clear the reset token and expiry (for security)
+            authentication.setResetPasswordToken(null);
+            authentication.setResetPasswordTokenExpiry(null);
+            
+            // Save changes to database
+            authenticationRepository.save(authentication);
+            
+            logger.info("Password successfully reset for user: {}", authentication.getEmail());
+            return ResponseEntity.ok("Password successfully reset. You can now log in with your new password.");
+            
+        } catch (Exception e) {
+            logger.error("Error resetting password: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Password reset failed. Please try again later.");
         }
     }
 }
