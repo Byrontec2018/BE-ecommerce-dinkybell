@@ -117,6 +117,18 @@ public class UserAuthentication {
      */
     @Column(name = "email_confirm_token_expiry")
     private LocalDateTime emailConfirmTokenExpiry;
+    
+    /**
+     * Token for password reset. Used to validate password reset requests.
+     */
+    @Column(name = "reset_password_token")
+    private String resetPasswordToken;
+
+    /**
+     * Expiration time for the password reset token. Tokens are typically valid for 1 hour.
+     */
+    @Column(name = "reset_password_token_expiry")
+    private LocalDateTime resetPasswordTokenExpiry;
 
     /**
      * Sets the registration date automatically when entity is first persisted.

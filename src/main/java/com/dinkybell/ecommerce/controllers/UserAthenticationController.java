@@ -9,6 +9,8 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import com.dinkybell.ecommerce.dtos.PasswordResetConfirmDTO;
+import com.dinkybell.ecommerce.dtos.PasswordResetRequestDTO;
 import com.dinkybell.ecommerce.dtos.UserAuthenticationRequestDTO;
 import com.dinkybell.ecommerce.services.UserAuthenticationService;
 import jakarta.validation.Valid;
@@ -90,6 +92,33 @@ public class UserAthenticationController {
     public ResponseEntity<?> logout(
             @RequestHeader(value = "Authorization", required = false) String authHeader) {
         return userAuthenticationService.logoutUser(authHeader);
+    }
+    
+    /**
+     * Handles password reset requests.
+     * 
+     * This endpoint initiates the password reset process by sending a reset link
+     * to the user's email address if it exists in the system.
+     * 
+     * @param requestDTO DTO containing the user's email address
+     * @return ResponseEntity with success message or error details
+     */
+    @PostMapping("/forgot-password")
+    public ResponseEntity<?> forgotPassword(@RequestBody @Valid PasswordResetRequestDTO requestDTO) {
+        return userAuthenticationService.requestPasswordReset(requestDTO);
+    }
+    
+    /**
+     * Handles password reset confirmation.
+     * 
+     * This endpoint validates the reset token and sets the new password if the token is valid.
+     * 
+     * @param resetDTO DTO containing the token and new password
+     * @return ResponseEntity with success message or error details
+     */
+    @PostMapping("/reset-password")
+    public ResponseEntity<?> resetPassword(@RequestBody @Valid PasswordResetConfirmDTO resetDTO) {
+        return userAuthenticationService.resetPassword(resetDTO);
     }
 
 }
