@@ -36,5 +36,14 @@ public interface UserAuthenticationRepository extends JpaRepository<UserAuthenti
      * @return The UserAuthentication record if found, or null if not found
      */
     UserAuthentication findByEmailConfirmToken(String resetToken);
+    
+    /**
+     * Finds a user authentication record by password reset token. 
+     * Used during the password reset process.
+     * 
+     * @param resetToken The password reset token to search for
+     * @return The UserAuthentication record if found, or null if not found
+     */
+    UserAuthentication findByResetPasswordToken(String resetToken);
 
 }
