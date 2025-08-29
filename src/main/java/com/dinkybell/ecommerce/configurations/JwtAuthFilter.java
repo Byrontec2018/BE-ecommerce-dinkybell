@@ -82,15 +82,15 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                 filterChain.doFilter(request, response);
                 return;
             }
-
-            // Extract email from token
-            final String email = jwtUtil.extractEmail(token);
-            
+           
             // Check if token is expired
             if (jwtUtil.isTokenExpired(token)) {
                 filterChain.doFilter(request, response);
                 return;
             }
+
+            // Extract email from token
+            final String email = jwtUtil.extractEmail(token);
             
             // If email exists and authentication is not already set
             if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {

@@ -1,0 +1,103 @@
+
+# =============================
+# Dinkybell E-Commerce Backend Configuration
+# =============================
+
+spring:
+  application:
+    name: ecommerce  # Spring Boot application name
+
+  # =============================
+  # PostgreSQL Database Configuration
+  # =============================
+  datasource:
+    url: jdbc:postgresql://${DB_HOST}:${DB_PORT}/${DB_NAME}  # Database connection URL
+    username: ${DB_USER}  # Database username
+    password: ${DB_PASSWORD}  # Database password
+    driver-class-name: org.postgresql.Driver  # JDBC driver
+
+  # =============================
+  # JPA/Hibernate Configuration
+  # =============================
+  jpa:
+    hibernate:
+      ddl-auto: update  # Update database schema at startup
+    show-sql: false  # Show SQL queries in console
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect  # PostgreSQL dialect
+        format_sql: true  # Format printed SQL queries
+
+  # =============================
+  # Redis Configuration
+  # =============================
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}  # Redis host
+      port: ${REDIS_PORT:6379}  # Redis port
+      password: ${REDIS_PASSWORD}  # Redis password (if set)
+      repositories:
+        enabled: false  # Disable Spring Data Redis repositories
+
+  # =============================
+  # Email Configuration (Spring Mail)
+  # =============================
+  mail:
+    host: ${EMAIL_HOST}  # SMTP host
+    port: ${EMAIL_PORT}  # SMTP port
+    username: ${EMAIL_USERNAME}  # SMTP username
+    password: ${EMAIL_PASSWORD}  # SMTP password
+    properties:
+      mail:
+        smtp:
+          auth: true  # Enable SMTP authentication
+          starttls:
+            enable: true  # Enable STARTTLS
+
+
+# =============================
+# Allow bean overriding (useful for Resilience4j)
+# =============================
+main:
+  allow-bean-definition-overriding: true
+
+# =============================
+# JWT Configuration
+# =============================
+jwt:
+  expiration: 3600000  # JWT token expiry in milliseconds (1 hour)
+
+# =============================
+# Management Endpoints Configuration
+# =============================
+management:
+  endpoint:
+    health:
+      show-details: always  # Always show health endpoint details
+
+# =============================
+# Resilience4j Rate Limiting Configuration
+# =============================
+resilience4j:
+  ratelimiter:
+    instances:
+      # Login endpoint: very restrictive
+      login:
+        limitForPeriod: 3
+        limitRefreshPeriod: 300s
+        timeoutDuration: 0
+      # Registration endpoint: even more restrictive
+      register:
+        limitForPeriod: 2
+        limitRefreshPeriod: 600s
+        timeoutDuration: 0
+      # Reset password endpoint: most restrictive
+      resetPassword:
+        limitForPeriod: 1
+        limitRefreshPeriod: 900s
+        timeoutDuration: 0
+      # Confirm reset password endpoint: restrictive
+      confirmResetPassword:
+        limitForPeriod: 2
+        limitRefreshPeriod: 600s
+        timeoutDuration: 0
