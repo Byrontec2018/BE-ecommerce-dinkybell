@@ -1,0 +1,84 @@
+services:
+  # PostgreSQL Service
+  postgres:
+    image: postgres:15-alpine
+    container_name: dinkybell-postgres
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_DB=${DB_NAME}
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - dinkybell-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # PgAdmin4 Service (PostgreSQL Admin Interface)
+  # pgadmin:
+  #   image: dpage/pgadmin4:latest
+  #   container_name: dinkybell-pgadmin
+  #   restart: unless-stopped
+  #   ports:
+  #     - "5050:80"
+  #   environment:
+  #     - PGADMIN_DEFAULT_EMAIL=${PGADMIN_EMAIL}
+  #     - PGADMIN_DEFAULT_PASSWORD=${PGADMIN_PASSWORD}
+  #     - PGADMIN_CONFIG_SERVER_MODE=False
+  #   depends_on:
+  #     - postgres
+  #   networks:
+  #     - dinkybell-network
+
+  # Redis Service
+  redis:
+    image: redis:7-alpine
+    container_name: dinkybell-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: >
+      redis-server
+      --appendonly yes
+      --requirepass ${REDIS_PASSWORD}
+    environment:
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+    networks:
+      - dinkybell-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis Commander Service (Redis Admin Interface)
+  # redis-commander:
+  #   image: rediscommander/redis-commander:latest
+  #   container_name: dinkybell-redis-ui
+  #   restart: unless-stopped
+  #   ports:
+  #     - "8081:8081"
+  #   environment:
+  #     - REDIS_HOSTS=local:dinkybell-redis:6379:0:${REDIS_PASSWORD}
+  #   depends_on:
+  #     - redis
+  #   networks:
+  #     - dinkybell-network
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+
+networks:
+  dinkybell-network:
+    driver: bridge
