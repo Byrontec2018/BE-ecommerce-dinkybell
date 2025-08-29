@@ -71,7 +71,7 @@ public class UserAuthenticationService {
             return ResponseEntity.badRequest().body("Email already exists");
         }
 
-        // Create hashed password using BCrypt
+        // Create hashed password using Argon2id algorithm
         String hashedPassword = passwordEncoder.encode(password);
 
         // Generate secure random token for email confirmation
@@ -402,7 +402,7 @@ public class UserAuthenticationService {
                 return ResponseEntity.badRequest().body("Invalid or expired token. Please request a new password reset.");
             }
             
-            // Encode the new password
+            // Encode the new password using Argon2id algorithm
             String hashedPassword = passwordEncoder.encode(newPassword);
             
             // Update the password
