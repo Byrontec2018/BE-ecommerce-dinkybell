@@ -1,0 +1,69 @@
+# Dinkybell E-Commerce Backend Configuration
+spring.application.name=ecommerce
+
+# Allow bean definition overriding for Resilience4j
+spring.main.allow-bean-definition-overriding=true
+
+# JWT expiration time (1 hour in milliseconds)
+jwt.expiration=3600000
+
+# Mail configuration
+spring.mail.host=${EMAIL_HOST}
+spring.mail.port=${EMAIL_PORT}
+spring.mail.username=${EMAIL_USERNAME}
+spring.mail.password=${EMAIL_PASSWORD}
+spring.mail.properties.mail.smtp.auth=true
+spring.mail.properties.mail.smtp.starttls.enable=true
+spring.mail.properties.mail.smtp.starttls.required=true
+spring.mail.properties.mail.smtp.connectiontimeout=5000
+spring.mail.properties.mail.smtp.timeout=3000
+spring.mail.properties.mail.smtp.writetimeout=5000
+
+# Server configuration
+server.port=8080
+
+# Database configuration
+spring.datasource.url=jdbc:postgresql://${DB_HOST}:${DB_PORT}/${DB_NAME}
+spring.datasource.username=${DB_USER}
+spring.datasource.password=${DB_PASSWORD}
+
+# DataSource configuration
+spring.datasource.driver-class-name=org.postgresql.Driver
+
+# JPA and Hibernate configuration
+spring.jpa.hibernate.ddl-auto=update
+spring.jpa.show-sql=false
+spring.jpa.properties.hibernate.format_sql=true
+spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.PostgreSQLDialect
+
+# Redis configuration for rate limiting
+spring.data.redis.host=${REDIS_HOST}
+spring.data.redis.port=${REDIS_PORT}
+spring.data.redis.password=${REDIS_PASSWORD}
+spring.data.redis.timeout=2000ms
+spring.data.redis.database=0
+
+# Resilience4j Rate Limiting configuration
+# Login: 3 attempts per 5 minutes
+resilience4j.ratelimiter.instances.login.limitForPeriod=3
+resilience4j.ratelimiter.instances.login.limitRefreshPeriod=300s
+resilience4j.ratelimiter.instances.login.timeoutDuration=0
+
+# Registration: 2 attempts per 10 minutes  
+resilience4j.ratelimiter.instances.register.limitForPeriod=2
+resilience4j.ratelimiter.instances.register.limitRefreshPeriod=600s
+resilience4j.ratelimiter.instances.register.timeoutDuration=0
+
+# Password reset request: 1 attempt per 15 minutes
+resilience4j.ratelimiter.instances.resetPassword.limitForPeriod=1
+resilience4j.ratelimiter.instances.resetPassword.limitRefreshPeriod=900s
+resilience4j.ratelimiter.instances.resetPassword.timeoutDuration=0
+
+# Password reset confirmation: 2 attempts per 10 minutes
+resilience4j.ratelimiter.instances.confirmResetPassword.limitForPeriod=2
+resilience4j.ratelimiter.instances.confirmResetPassword.limitRefreshPeriod=600s
+resilience4j.ratelimiter.instances.confirmResetPassword.timeoutDuration=0
+
+# Enable Resilience4j management endpoints for monitoring
+management.endpoints.web.exposure.include=health,info,ratelimiters
+management.endpoint.health.show-details=always

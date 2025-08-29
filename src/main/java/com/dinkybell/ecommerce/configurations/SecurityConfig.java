@@ -7,7 +7,6 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
@@ -16,10 +15,13 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
  * Spring Security Configuration.
  * 
  * This class configures the security aspects of the application including:
- * - Password encoding strategy (BCrypt)
+ * - Modern password encoding strategy (Argon2id)
  * - HTTP security settings 
  * - JWT authentication mechanism
  * - Authorization rules for endpoints
+ * 
+ * Uses Argon2id exclusively for enhanced security - the winner of 
+ * Password Hashing Competition (PHC) 2015 and OWASP recommended algorithm.
  */
 @Configuration
 @EnableWebSecurity
@@ -29,16 +31,19 @@ public class SecurityConfig {
     private JwtAuthFilter jwtAuthFilter;
 
     /**
-     * Creates a password encoder bean for secure password storage.
+     * Creates the primary password encoder bean using modern Argon2id algorithm.
      * 
-     * BCrypt is used as it implements adaptive hashing and includes salt automatically, making it
-     * resistant to rainbow table attacks.
+     * Argon2id provides superior security compared to BCrypt:
+     * - Memory-hard function (resistant to GPU/ASIC attacks)
+     * - Configurable time, memory, and parallelism costs
+     * - Winner of Password Hashing Competition (PHC) 2015
+     * - Recommended by OWASP for password hashing
      * 
-     * @return A BCryptPasswordEncoder instance
+     * @return The Argon2PasswordEncoder instance
      */
     @Bean
     public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
+        return new Argon2PasswordEncoder();
     }
 
     /**
