@@ -11,9 +11,9 @@ spring:
   # PostgreSQL Database Configuration
   # =============================
   datasource:
-    url: jdbc:postgresql://${DB_HOST}:${DB_PORT}/${DB_NAME}  # Database connection URL
-    username: ${DB_USER}  # Database username
-    password: ${DB_PASSWORD}  # Database password
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:dinkybell_db}  # Database connection URL
+    username: ${DB_USER:admin}  # Database username
+    password: ${DB_PASSWORD:Admin}  # Database password
     driver-class-name: org.postgresql.Driver  # JDBC driver
 
   # =============================
@@ -43,10 +43,10 @@ spring:
   # Email Configuration (Spring Mail)
   # =============================
   mail:
-    host: ${EMAIL_HOST}  # SMTP host
-    port: ${EMAIL_PORT}  # SMTP port
-    username: ${EMAIL_USERNAME}  # SMTP username
-    password: ${EMAIL_PASSWORD}  # SMTP password
+    host: ${EMAIL_HOST:smtp.hostinger.com}  # SMTP host
+    port: ${EMAIL_PORT:587}  # SMTP port
+    username: ${EMAIL_USERNAME:support.dinkybell.com}  # SMTP username
+    password: ${EMAIL_PASSWORD:Sushi1407!}  # SMTP password
     properties:
       mail:
         smtp:
@@ -65,7 +65,11 @@ main:
 # JWT Configuration
 # =============================
 jwt:
-  expiration: 3600000  # JWT token expiry in milliseconds (1 hour)
+  access-token:    
+    expiration: 300000  # Access token expiry in milliseconds (5 min) TESTING PURPOSES
+    # expiration: 3600000  # Access token expiry in milliseconds (1 hour)
+  refresh-token:
+    expiration: 2592000000  # Refresh token expiry in milliseconds (30 days)
 
 # =============================
 # Management Endpoints Configuration
@@ -100,4 +104,9 @@ resilience4j:
       confirmResetPassword:
         limitForPeriod: 2
         limitRefreshPeriod: 600s
+        timeoutDuration: 0
+      # Refresh token endpoint: moderately restrictive
+      refreshToken:
+        limitForPeriod: 2
+        limitRefreshPeriod: 60s
         timeoutDuration: 0
