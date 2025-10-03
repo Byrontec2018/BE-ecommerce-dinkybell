@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -64,7 +65,8 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         
         // Get authorization header
         final String authHeader = request.getHeader("Authorization");
-        
+        logger.info("Token ricevuto nell'header!");
+
         // Check if Authorization header exists and starts with "Bearer "
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             filterChain.doFilter(request, response);
@@ -73,21 +75,33 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         
         // Extract token by removing "Bearer " prefix
         final String token = authHeader.substring(7);
+        logger.info("Token estratto dall'Header!");
         
         try {
+
+            // Check if token is expired
+            if (jwtUtil.isTokenExpired(token)) {
+                logger.info("Token scaduto");
+
+                // Invece di continuare come anonimo, informa il frontend
+                response.setStatus(HttpStatus.UNAUTHORIZED.value());
+                response.setHeader("X-Token-Expired", "true");
+                response.setContentType("application/json");
+                response.getWriter().write("{\"error\":\"access_token_expired\",\"message\":\"Token expired, please refresh\"}");
+                return; // NON chiamare filterChain.doFilter()
+                
+                //filterChain.doFilter(request, response);
+                //return;
+            }
+
             // Extract JWT ID to check if token is blacklisted
             String jti = jwtUtil.extractJti(token);
+            logger.info("JWT ID estratto: " + jti);
             if (tokenBlacklistService.isBlacklisted(jti)) {
                 // Token is blacklisted (user logged out), continue chain without authentication
                 filterChain.doFilter(request, response);
                 return;
-            }
-           
-            // Check if token is expired
-            if (jwtUtil.isTokenExpired(token)) {
-                filterChain.doFilter(request, response);
-                return;
-            }
+            }                    
 
             // Extract email from token
             final String email = jwtUtil.extractEmail(token);

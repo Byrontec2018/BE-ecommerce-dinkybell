@@ -13,10 +13,13 @@ import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+
+import jakarta.servlet.http.HttpServletRequest;
 import com.dinkybell.ecommerce.dtos.JwtResponseDTO;
 import com.dinkybell.ecommerce.dtos.PasswordResetConfirmDTO;
 import com.dinkybell.ecommerce.dtos.PasswordResetRequestDTO;
 import com.dinkybell.ecommerce.entities.UserAuthentication;
+import com.dinkybell.ecommerce.entities.RefreshToken;
 import com.dinkybell.ecommerce.repositories.UserAuthenticationRepository;
 import com.dinkybell.ecommerce.utils.JwtUtil;
 
@@ -50,12 +53,16 @@ public class UserAuthenticationService {
     private JwtUtil jwtUtil;
 
     /** JWT token expiration time in milliseconds from application properties */
-    @Value("${jwt.expiration}")
+    @Value("${jwt.access-token.expiration}")
     private long jwtExpiration;
 
     /** Service for managing blacklisted tokens */
     @Autowired
     private TokenBlacklistService tokenBlacklistService;
+    
+    /** Service for managing refresh tokens */
+    @Autowired
+    private RefreshTokenService refreshTokenService;
 
     /**
      * Registers a new user in the system with email and password.
@@ -193,9 +200,10 @@ public class UserAuthenticationService {
      * 
      * @param email User's email address
      * @param password User's password (plain text)
-     * @return ResponseEntity containing JWT token or error message
+     * @param request The HTTP request (for device information)
+     * @return ResponseEntity containing JWT token, refresh token or error message
      */
-    public ResponseEntity<?> loginUser(String email, String password) {
+    public ResponseEntity<?> loginUser(String email, String password, HttpServletRequest request) {
         try {
             // Retrieve user from database by email
             UserAuthentication authentication =
@@ -218,6 +226,9 @@ public class UserAuthenticationService {
 
             // Generate JWT token with RS256 algorithm
             String token = jwtUtil.generateToken(authentication);
+            // Generate refresh token
+            RefreshToken refreshToken = refreshTokenService.createRefreshToken(
+                    authentication.getId(), request);                  
 
             // Record the login timestamp
             authentication.setLastLogin(LocalDateTime.now());
@@ -228,9 +239,12 @@ public class UserAuthenticationService {
             // Get token expiration date from the token itself
             Date tokenExpirationTime = jwtUtil.extractExpirationDate(token);
 
-            // Return JWT token and relevant information
-            return ResponseEntity
-                    .ok(new JwtResponseDTO(token, authentication.getEmail(), tokenExpirationTime));
+            // Return JWT token, refresh token and relevant information
+            return ResponseEntity.ok(new JwtResponseDTO(
+                    token, 
+                    refreshToken.getToken(),
+                    authentication.getEmail(),
+                    tokenExpirationTime));
         } catch (Exception e) {
             // Log the error and return generic message
             e.printStackTrace();

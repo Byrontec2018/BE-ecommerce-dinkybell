@@ -36,7 +36,7 @@ public class JwtUtil {
     private KeyPair keyPair;
 
     /** Token expiration time in milliseconds, loaded from application properties */
-    @Value("${jwt.expiration}")
+    @Value("${jwt.access-token.expiration}")
     private long expirationTime;
 
     /**
