@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import jakarta.servlet.http.HttpServletRequest;
 
 import com.dinkybell.ecommerce.dtos.PasswordResetConfirmDTO;
 import com.dinkybell.ecommerce.dtos.PasswordResetRequestDTO;
@@ -83,9 +84,10 @@ public class UserAthenticationController {
      */
     @RateLimiter(name = "login", fallbackMethod = "loginFallback")
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody @Valid UserAuthenticationRequestDTO loginRequest) {
+    public ResponseEntity<?> login(@RequestBody @Valid UserAuthenticationRequestDTO loginRequest, 
+                                  HttpServletRequest request) {        
         return userAuthenticationService.loginUser(loginRequest.getEmail(),
-                loginRequest.getPassword());
+                loginRequest.getPassword(), request);
     }
 
     /**
@@ -151,7 +153,7 @@ public class UserAthenticationController {
     /**
      * Fallback method for login endpoint when rate limit is exceeded.
      */
-    public ResponseEntity<?> loginFallback(UserAuthenticationRequestDTO loginRequest, RequestNotPermitted ex) {
+    public ResponseEntity<?> loginFallback(UserAuthenticationRequestDTO loginRequest, HttpServletRequest request, RequestNotPermitted ex) {
         return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body(Map.of(
             "error", "Login rate limit exceeded",
             "message", "Too many login attempts. Please wait 5 minutes before trying again.",

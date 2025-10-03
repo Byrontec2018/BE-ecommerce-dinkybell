@@ -19,6 +19,14 @@ public interface UserAuthenticationRepository extends JpaRepository<UserAuthenti
      * @return An Optional containing the user if found, or empty if not found
      */
     Optional<UserAuthentication> findByEmail(String email);
+    
+    /**
+     * Finds a user authentication record by user ID.
+     * 
+     * @param id The user ID to search for
+     * @return An Optional containing the user authentication if found, or empty if not found
+     */
+    Optional<UserAuthentication> findById(Long id);
 
     /**
      * Checks if a user with the given email exists.
