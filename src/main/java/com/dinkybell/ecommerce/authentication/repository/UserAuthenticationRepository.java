@@ -1,7 +1,12 @@
 package com.dinkybell.ecommerce.authentication.repository;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+
 import com.dinkybell.ecommerce.authentication.entity.UserAuthentication;
 
 /**
@@ -53,5 +58,15 @@ public interface UserAuthenticationRepository extends JpaRepository<UserAuthenti
      * @return The UserAuthentication record if found, or null if not found
      */
     UserAuthentication findByResetPasswordToken(String resetToken);
+
+    /**
+     * Deletes all users disabled after 48 hours. This method is used for database cleanup.
+     * 
+     * @param now The current date/time
+     * @return The number of users deleted
+     */
+    @Modifying
+    @Query("DELETE FROM UserAuthentication t WHERE t.enabled = false AND t.registrationDate < :threshold")
+    int deleteExpiredUsers(@Param("threshold") LocalDateTime threshold);
 
 }
