@@ -51,9 +51,7 @@ public class UserAthenticationController {
      */
     @RateLimiter(name = "register", fallbackMethod = "registerFallback")
     @PostMapping("/register")
-    public ResponseEntity<?> register(
-            @RequestBody @Valid UserAuthenticationRequestDTO registerRequest) {
-        log.info("Registering user with email: {}", registerRequest.getEmail());
+    public ResponseEntity<?> register(@RequestBody @Valid UserAuthenticationRequestDTO registerRequest) {        
         return userAuthenticationService.registerUser(registerRequest.getEmail(),
                 registerRequest.getPassword());
     }
@@ -68,8 +66,7 @@ public class UserAthenticationController {
      * @return ResponseEntity with success message or error details
      */
     @GetMapping("/confirm-email")
-    public ResponseEntity<?> confirmEmail(@RequestParam String token) {
-        log.info("Confirming email with token: {}", token);
+    public ResponseEntity<?> confirmEmail(@RequestParam String token) {        
         return userAuthenticationService.confirmEmail(token);
     }
 
@@ -85,8 +82,7 @@ public class UserAthenticationController {
      */
     @RateLimiter(name = "login", fallbackMethod = "loginFallback")
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody @Valid UserAuthenticationRequestDTO loginRequest, 
-                                  HttpServletRequest request) {        
+    public ResponseEntity<?> login(@RequestBody @Valid UserAuthenticationRequestDTO loginRequest, HttpServletRequest request) {
         return userAuthenticationService.loginUser(loginRequest.getEmail(),
                 loginRequest.getPassword(), request);
     }
@@ -101,8 +97,7 @@ public class UserAthenticationController {
      * @return ResponseEntity with success message or error details
      */
     @GetMapping("/logout")
-    public ResponseEntity<?> logout(
-            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+    public ResponseEntity<?> logout(@RequestHeader(value = "Authorization", required = false) String authHeader) {
         return userAuthenticationService.logoutUser(authHeader);
     }
     
