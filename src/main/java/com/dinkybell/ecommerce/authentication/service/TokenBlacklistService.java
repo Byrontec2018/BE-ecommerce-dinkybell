@@ -57,10 +57,10 @@ public class TokenBlacklistService {
     }
 
     /**
-     * Scheduled task that removes expired tokens from the blacklist. Runs automatically every hour
-     * to keep the blacklist table clean.
+     * Scheduled task that removes expired tokens from the blacklist. 
+     * Runs automatically every day at midnight to keep the blacklist table clean.
      */
-    @Scheduled(fixedRate = 3600000) // 1 hour in milliseconds
+    @Scheduled(cron = "0 0 0 * * *") // Every day at midnight
     @Transactional
     public void cleanupExpiredTokens() {
         Date now = new Date();
