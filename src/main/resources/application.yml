@@ -43,7 +43,7 @@ spring:
   # Email Configuration (Spring Mail)
   # =============================
   mail:
-    host: ${EMAIL_HOST:smtp.hostinger.com}  # SMTP host
+    host: ${EMAIL_HOST:smtp.dondominio.com}  # SMTP host
     port: ${EMAIL_PORT:465}  # SMTP port (465 for SSL/TLS, 587 for STARTTLS)
     username: ${EMAIL_USERNAME:support@dinkybell.com}  # SMTP username (email format)
     password: ${EMAIL_PASSWORD:Sushi1407!}  # SMTP password
@@ -53,7 +53,7 @@ spring:
           auth: true  # Enable SMTP authentication
           ssl:
             enable: true  # Enable SSL for port 465
-            trust: smtp.hostinger.com  # Trust the SMTP host
+            trust: smtp.dondominio.com  # Trust the SMTP host
           starttls:
             enable: false  # Disable STARTTLS for SSL port 465
             required: false  # STARTTLS not required for SSL
