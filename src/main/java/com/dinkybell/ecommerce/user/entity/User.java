@@ -9,6 +9,7 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.ToString;
 
 /**
  * User entity representing the main user information in the system.
@@ -24,6 +25,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@ToString
 public class User {
 
     /**
@@ -36,6 +38,7 @@ public class User {
     /**
      * The user's encrypted password. Should never store plain text passwords.
      */
+    @ToString.Exclude
     private String password;
 
     /**
