@@ -1,7 +1,10 @@
 package com.dinkybell.ecommerce.shared.dto;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import java.util.List;
 
 /**
@@ -13,8 +16,11 @@ import java.util.List;
  * 
  * Using the Builder pattern for flexible instantiation.
  */
-@Data
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
+@Getter
+@Setter
 public class ErrorResponseDTO {
     /**
      * The status code or status identifier for the error. Typically matches HTTP status codes like

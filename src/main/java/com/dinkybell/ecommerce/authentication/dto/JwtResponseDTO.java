@@ -4,8 +4,9 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Date;
 import lombok.AllArgsConstructor;
-import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 /**
  * Data Transfer Object for JWT authentication response.
@@ -14,9 +15,10 @@ import lombok.NoArgsConstructor;
  * successful authentication. It includes the access token, refresh token, token type (Bearer), 
  * the authenticated user's email, and the token's expiration time.
  */
-@Data
 @AllArgsConstructor
 @NoArgsConstructor
+@Getter
+@Setter
 public class JwtResponseDTO {
     /**
      * The JWT token string to be used for authentication (access token).
