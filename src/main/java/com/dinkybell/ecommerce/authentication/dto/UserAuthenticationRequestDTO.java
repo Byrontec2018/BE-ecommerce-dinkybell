@@ -5,7 +5,8 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
 /**
  * Data Transfer Object for authentication requests.
@@ -13,7 +14,8 @@ import lombok.Data;
  * This DTO captures and validates the credentials needed for both registration and login
  * operations. It includes comprehensive validation rules to ensure security requirements are met.
  */
-@Data
+@Getter
+@Setter
 public class UserAuthenticationRequestDTO {
 
     /**
