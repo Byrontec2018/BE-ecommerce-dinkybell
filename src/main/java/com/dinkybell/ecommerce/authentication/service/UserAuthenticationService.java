@@ -8,6 +8,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.lang.NonNull;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -94,7 +95,7 @@ public class UserAuthenticationService {
         String hashedPassword = passwordEncoder.encode(password);
         userAuthentication.setPassword(hashedPassword);
                 
-        // 
+        // Create email confirmation token
         createConfirmationToken(userAuthentication);
 
         return saveUser(userAuthentication);
@@ -107,7 +108,7 @@ public class UserAuthenticationService {
      * @param userAuthentication The user authentication entity to save
      * @return ResponseEntity with success message or error details
      */
-    public ResponseEntity<String> saveUser(UserAuthentication userAuthentication) {
+    public ResponseEntity<String> saveUser(@NonNull UserAuthentication userAuthentication) {
 
         try {
             // Persist user to database
@@ -167,7 +168,7 @@ public class UserAuthenticationService {
 
         try {
             // Generate secure HTTPS confirmation link with token
-            String confirmationLink = "https://192.162.1.108:8080/api/v1/auth/confirm-email?token="
+            String confirmationLink = "http://192.168.1.176:8080/api/v1/auth/confirm-email?token="
                     + userAuthentication.getEmailConfirmToken();
 
             // Create email message with verification link
