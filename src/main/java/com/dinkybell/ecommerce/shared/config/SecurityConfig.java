@@ -7,8 +7,12 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.lang.NonNull;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.servlet.config.annotation.CorsRegistry;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+
 import com.dinkybell.ecommerce.authentication.config.JwtAuthFilter;
 import lombok.RequiredArgsConstructor;
 
@@ -45,6 +49,23 @@ public class SecurityConfig {
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new Argon2PasswordEncoder();
+    }
+
+    @Configuration
+    public class CorsConfig implements WebMvcConfigurer {
+        @Override
+        public void addCorsMappings(@NonNull CorsRegistry registry) {
+            registry.addMapping("/api/**")
+                    .allowedOrigins("http://192.168.1.176:8080/api/v1/auth/*")
+                    .allowedOrigins("http://localhost:8080/api/v1/auth/*")
+                    .allowedOrigins("http://192.168.1.176:8080/swagger-ui/**")
+                    .allowedOrigins("http://localhost:8080/swagger-ui/**")
+                    .allowedOrigins("http://192.168.1.176:8080//v3/api-docs/**")
+                    .allowedOrigins("http://localhost:8080/v3/api-docs/**")
+                    .allowedMethods("GET", "POST", "PUT", "DELETE")
+                    .allowedHeaders("*")
+                    .allowCredentials(true);
+        }
     }
 
     /**
