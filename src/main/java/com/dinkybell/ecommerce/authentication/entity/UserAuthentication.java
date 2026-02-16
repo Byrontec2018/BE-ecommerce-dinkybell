@@ -18,8 +18,10 @@ import jakarta.persistence.UniqueConstraint;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
-import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
 
 /**
  * UserAuthentication entity representing authentication-related information.
@@ -32,7 +34,9 @@ import lombok.NoArgsConstructor;
  * isolation.
  */
 @NoArgsConstructor
-@Data
+@Getter
+@Setter
+@ToString
 @Entity
 @Table(name = "users_authentication",
         uniqueConstraints = {@UniqueConstraint(columnNames = {"email"})})
@@ -73,6 +77,7 @@ public class UserAuthentication {
      * stored.
      */
     @Column(length = 255, nullable = false)
+    @ToString.Exclude
     private String password;
 
     /**
