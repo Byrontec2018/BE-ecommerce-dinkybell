@@ -133,13 +133,8 @@ public class UserAthenticationController {
      * @return ResponseEntity with success message or error details
      */
     @RateLimiter(name = "confirmResetPassword")
-    //@PostMapping("/reset-password")
-    //public ResponseEntity<?> resetPassword(@RequestBody @Valid PasswordResetConfirmDTO resetDTO) {
-    @GetMapping("/reset-password")
-    public ResponseEntity<?> resetPassword(@RequestParam String token, @RequestParam String newPassword) {
-        PasswordResetConfirmDTO resetDTO = new PasswordResetConfirmDTO();
-        resetDTO.setToken(token);
-        resetDTO.setNewPassword(newPassword);
+    @PostMapping("/reset-password")
+    public ResponseEntity<?> resetPassword(@RequestBody @Valid PasswordResetConfirmDTO resetDTO) {
         return passwordResetService.resetPassword(resetDTO);
     }    
  
