@@ -2,18 +2,15 @@ package com.dinkybell.ecommerce.authentication.controller;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.dinkybell.ecommerce.authentication.dto.RefreshTokenRequestDTO;
 import com.dinkybell.ecommerce.authentication.exception.RefreshTokenException;
 import com.dinkybell.ecommerce.authentication.service.RefreshTokenService;
 import lombok.RequiredArgsConstructor;
-
+import lombok.extern.slf4j.Slf4j;
 import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.validation.Valid;
 
 /**
  * REST Controller for refresh token operations.
@@ -23,8 +20,12 @@ import jakarta.validation.Valid;
  * - Token revocation (logout from current device)
  * - Revoking other sessions (logout from all other devices)
  * 
+ * All endpoints follow OAuth 2.0 RFC 6750 standard, receiving refresh tokens
+ * via Authorization header (Bearer token format).
+ * 
  * All endpoints are rate-limited to prevent abuse.
  */
+@Slf4j
 @RestController
 @RequestMapping("/api/v1/auth")
 @RequiredArgsConstructor
@@ -33,70 +34,51 @@ public class RefreshTokenController {
     private final RefreshTokenService refreshTokenService;
     
     /**
-     * Refreshes an access token using a valid refresh token.
+     * Refreshes an access token using a valid refresh token via Authorization header.
+     * Follows OAuth 2.0 RFC 6750 standard.
      * Rate limited to prevent token refresh abuse.
      * 
-     * @param request The refresh token request containing the token
-     * @param httpRequest The HTTP request for device tracking
-     * @return ResponseEntity with new access token or error message
+     * @param authHeader The Authorization header containing "Bearer <token>"
+     * @return ResponseEntity with APIResponseDTO containing new access token
+     * @throws RefreshTokenException if the refresh token is invalid or expired
      */
-    @RateLimiter(name = "refreshToken", fallbackMethod = "refreshTokenFallback")
+    @RateLimiter(name = "refreshToken")
     @PostMapping("/refresh-token")
-    public ResponseEntity<?> refreshToken(@Valid @RequestBody RefreshTokenRequestDTO request,
-                                        HttpServletRequest httpRequest) {
-        try {
-            return refreshTokenService.refreshAccessToken(request.getRefreshToken(), httpRequest);
-        } catch (RefreshTokenException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+    public ResponseEntity<?> refreshToken(@RequestHeader(name = "Authorization", required = false) String refreshToken) {       
+        return refreshTokenService.refreshAccessToken(refreshToken);
     }
     
     /**
      * Revokes a refresh token, effectively logging out from the current device.
+     * Reads token from Authorization header following OAuth 2.0 standard.
+     * Rate limited to prevent abuse of token revocation.
      * 
-     * @param request The refresh token request containing the token to revoke
-     * @return ResponseEntity with success message or error
+     * @param authHeader The Authorization header containing "Bearer <token>"
+     * @return ResponseEntity with success message or error handled by GlobalExceptionHandler
+     * @throws RefreshTokenException if the refresh token is invalid
      */
+    @RateLimiter(name = "revokeToken")
     @PostMapping("/revoke-token")
-    public ResponseEntity<?> revokeToken(@Valid @RequestBody RefreshTokenRequestDTO request) {
-        try {
-            refreshTokenService.revokeRefreshToken(request.getRefreshToken());
-            return ResponseEntity.ok("Token successfully revoked");
-        } catch (RefreshTokenException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+    public ResponseEntity<?> revokeToken(@RequestHeader(name = "Authorization", required = false) String refreshToken) {        
+        return refreshTokenService.revokeRefreshToken(refreshToken);
     }
     
     /**
      * Revokes all other refresh tokens for the user, keeping only the current session active.
      * This implements "log out from all other devices" functionality.
+     * Reads token from Authorization header following OAuth 2.0 standard.
+     * Rate limited to prevent abuse of session management.
      * 
-     * @param request The refresh token request containing the current token to keep
-     * @return ResponseEntity with success message or error
+     * @param refreshToken The Authorization header containing "Bearer <token>"
+     * @return ResponseEntity with success message or error handled by GlobalExceptionHandler
+     * @throws RefreshTokenException if the refresh token is invalid
      */
+    @RateLimiter(name = "revokeOtherSessions")
     @PostMapping("/revoke-other-sessions")
-    public ResponseEntity<?> revokeOtherSessions(@Valid @RequestBody RefreshTokenRequestDTO request) {
-        try {
-            refreshTokenService.revokeOtherTokens(request.getRefreshToken());
-            return ResponseEntity.ok("Other sessions successfully revoked");
-        } catch (RefreshTokenException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+    public ResponseEntity<?> revokeOtherSessions(@RequestHeader(name = "Authorization", required = false) String refreshToken) {
+        log.info("Revoking other sessions with token: {}", refreshToken);
+        return refreshTokenService.revokeOtherTokens(refreshToken);
     }
+
     
-    /**
-     * Fallback method for rate limiting on token refresh.
-     * Called when too many refresh requests are made within the time window.
-     * 
-     * @param request The original refresh token request
-     * @param httpRequest The HTTP request
-     * @param ex The rate limiting exception
-     * @return ResponseEntity with rate limiting error message
-     */
-    public ResponseEntity<?> refreshTokenFallback(RefreshTokenRequestDTO request, 
-                                                HttpServletRequest httpRequest, 
-                                                Exception ex) {
-        return ResponseEntity.status(429)
-            .body("Too many token refresh attempts. Please try again later.");
-    }
 }
