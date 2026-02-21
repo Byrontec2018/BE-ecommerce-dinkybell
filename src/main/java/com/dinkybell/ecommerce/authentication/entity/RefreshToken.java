@@ -8,7 +8,6 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
-
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -24,10 +23,10 @@ import lombok.Setter;
  * uses a simple user_id reference for better performance and to avoid lazy loading issues.
  */
 @Entity
-@Table(name = "refresh_tokens")
 @Getter
 @Setter
 @NoArgsConstructor
+@Table(name = "refresh_tokens")
 public class RefreshToken {
     
     /**

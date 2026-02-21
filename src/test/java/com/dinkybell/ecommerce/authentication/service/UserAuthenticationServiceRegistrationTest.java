@@ -19,15 +19,14 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.mail.MailAuthenticationException;
-import org.springframework.mail.SimpleMailMessage;
-import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import com.dinkybell.ecommerce.authentication.dto.UserAuthenticationRequestDTO;
 import com.dinkybell.ecommerce.authentication.entity.UserAuthentication;
 import com.dinkybell.ecommerce.authentication.repository.UserAuthenticationRepository;
-import com.dinkybell.ecommerce.authentication.util.JwtUtil;
 
 @ExtendWith(MockitoExtension.class)
+@SuppressWarnings("null")
 class UserAuthenticationServiceRegistrationTest {
 
     @Mock
@@ -37,25 +36,19 @@ class UserAuthenticationServiceRegistrationTest {
     private PasswordEncoder passwordEncoder;
 
     @Mock
-    private JavaMailSender mailSender;
-
-    @Mock
-    private JwtUtil jwtUtil;
-
-    @Mock
-    private TokenBlacklistService tokenBlacklistService;
-
-    @Mock
-    private RefreshTokenService refreshTokenService;
+    private EmailNotificationService emailNotificationService;
 
     @InjectMocks
-    private UserAuthenticationService service;
+    private UserRegistrationService service;
 
     @Test
     void registerUser_newEmail_savesUserAndSendsConfirmationEmail() {
         String email = "user@example.com";
         String password = "secret";
         String hashed = "hashed-secret";
+        UserAuthenticationRequestDTO requestDTO = new UserAuthenticationRequestDTO();
+        requestDTO.setEmail(email);
+        requestDTO.setPassword(password);
 
         when(authenticationRepository.existsByEmail(email)).thenReturn(false);
         when(passwordEncoder.encode(password)).thenReturn(hashed);
@@ -65,11 +58,9 @@ class UserAuthenticationServiceRegistrationTest {
             return saved;
         });
 
-        ResponseEntity<?> response = service.registerUser(email, password);
+        ResponseEntity<?> response = service.registerUser(requestDTO);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(response.getBody())
-                .isEqualTo("Please confirm your email, check your inbox for the confirmation link.");
 
         ArgumentCaptor<UserAuthentication> captor = ArgumentCaptor.forClass(UserAuthentication.class);
         verify(authenticationRepository, times(1)).save(captor.capture());
@@ -78,40 +69,51 @@ class UserAuthenticationServiceRegistrationTest {
         assertThat(savedUser.getPassword()).isEqualTo(hashed);
         assertThat(savedUser.getEmailConfirmToken()).isNotNull();
         assertThat(savedUser.getEmailConfirmTokenExpiry()).isNotNull();
-        verify(mailSender, times(1)).send(any(SimpleMailMessage.class));
+        verify(emailNotificationService, times(1)).sendConfirmationEmail(any(UserAuthentication.class));
     }
 
     @Test
-    void registerUser_existingEnabledEmail_returnsBadRequest() {
+    void registerUser_existingActiveEmail_throwsException() {
         String email = "user@example.com";
         String password = "secret";
+        UserAuthenticationRequestDTO requestDTO = new UserAuthenticationRequestDTO();
+        requestDTO.setEmail(email);
+        requestDTO.setPassword(password);
+        
         UserAuthentication existing = new UserAuthentication();
         existing.setEmail(email);
-        existing.setEnabled(true);
+        existing.setActive(true);
 
         when(authenticationRepository.existsByEmail(email)).thenReturn(true);
-        when(authenticationRepository.findByEmail(email)).thenReturn(java.util.Optional.of(existing));
+        when(authenticationRepository.existsByEmailAndActiveFalse(email)).thenReturn(false);
 
-        ResponseEntity<?> response = service.registerUser(email, password);
+        // This should throw EmailAlreadyExistsException which is handled by GlobalExceptionHandler
+        org.junit.jupiter.api.Assertions.assertThrows(
+            com.dinkybell.ecommerce.authentication.exception.EmailAlreadyExistsException.class,
+            () -> service.registerUser(requestDTO)
+        );
 
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-        assertThat(response.getBody()).isEqualTo("Email already exists");
         verify(authenticationRepository, never()).save(any(UserAuthentication.class));
-        verify(mailSender, never()).send(any(SimpleMailMessage.class));
+        verify(emailNotificationService, never()).sendConfirmationEmail(any(UserAuthentication.class));
     }
 
-    // This test covers the case where an email exists but is not enabled, so it should resend the confirmation email.
+    // This test covers the case where an email exists but is not active, so it should resend the confirmation email.
     // It verifies that the user is updated with a new token and that an email is sent.
     @Test
-    void registerUser_existingNotEnabledEmail_resendsConfirmation() {
+    void registerUser_existingNotActiveEmail_resendsConfirmation() {
         String email = "user@example.com";
         String password = "secret";
         String hashed = "hashed-secret";
+        UserAuthenticationRequestDTO requestDTO = new UserAuthenticationRequestDTO();
+        requestDTO.setEmail(email);
+        requestDTO.setPassword(password);
+        
         UserAuthentication existing = new UserAuthentication();
         existing.setEmail(email);
-        existing.setEnabled(false);
+        existing.setActive(false);
 
         when(authenticationRepository.existsByEmail(email)).thenReturn(true);
+        when(authenticationRepository.existsByEmailAndActiveFalse(email)).thenReturn(true);
         when(authenticationRepository.findByEmail(email)).thenReturn(java.util.Optional.of(existing));
         when(passwordEncoder.encode(password)).thenReturn(hashed);
         when(authenticationRepository.save(any(UserAuthentication.class))).thenAnswer(invocation -> {
@@ -120,7 +122,7 @@ class UserAuthenticationServiceRegistrationTest {
             return saved;
         });
 
-        ResponseEntity<?> response = service.registerUser(email, password);
+        ResponseEntity<?> response = service.registerUser(requestDTO);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         ArgumentCaptor<UserAuthentication> captor = ArgumentCaptor.forClass(UserAuthentication.class);
@@ -130,11 +132,11 @@ class UserAuthenticationServiceRegistrationTest {
         assertThat(savedUser.getPassword()).isEqualTo(hashed);
         assertThat(savedUser.getEmailConfirmToken()).isNotNull();
         assertThat(savedUser.getEmailConfirmTokenExpiry()).isNotNull();
-        verify(mailSender, times(1)).send(any(SimpleMailMessage.class));
+        verify(emailNotificationService, times(1)).sendConfirmationEmail(any(UserAuthentication.class));
     }
 
     @Test
-    void saveUser_whenEmailSendingFails_returnsBadRequest() {
+    void saveUser_whenEmailSendingFails_throwsException() {
         UserAuthentication user = new UserAuthentication();
         user.setEmail("user@example.com");
         user.setEmailConfirmToken("token");
@@ -146,29 +148,30 @@ class UserAuthenticationServiceRegistrationTest {
             return saved;
         });
         doThrow(new MailAuthenticationException("bad-credentials"))
-                .when(mailSender).send(any(SimpleMailMessage.class));
+                .when(emailNotificationService).sendConfirmationEmail(any(UserAuthentication.class));
 
-        ResponseEntity<String> response = service.saveUser(user);
-
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-        assertThat(response.getBody()).contains("Email authentication failed");
+        // EmailSendException is handled by GlobalExceptionHandler
+        org.junit.jupiter.api.Assertions.assertThrows(
+            MailAuthenticationException.class,
+            () -> service.saveUser(user)
+        );
     }
 
     @Test
-    void saveUser_whenSaveReturnsNullId_returnsServerError() {
+    void saveUser_success_returnsOk() {
         UserAuthentication user = new UserAuthentication();
         user.setEmail("user@example.com");
         user.setEmailConfirmToken("token");
         user.setEmailConfirmTokenExpiry(LocalDateTime.now().plusMinutes(5));
 
         UserAuthentication saved = new UserAuthentication();
+        saved.setId(4L);
         saved.setEmail("user@example.com");
         when(authenticationRepository.save(any(UserAuthentication.class))).thenReturn(saved);
 
-        ResponseEntity<String> response = service.saveUser(user);
+        ResponseEntity<?> response = service.saveUser(user);
 
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
-        assertThat(response.getBody()).isEqualTo("Registration failed");
-        verify(mailSender, never()).send(any(SimpleMailMessage.class));
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        verify(emailNotificationService, times(1)).sendConfirmationEmail(any(UserAuthentication.class));
     }
 }

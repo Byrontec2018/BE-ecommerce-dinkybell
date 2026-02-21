@@ -76,9 +76,7 @@ public class RefreshTokenController {
     @RateLimiter(name = "revokeOtherSessions")
     @PostMapping("/revoke-other-sessions")
     public ResponseEntity<?> revokeOtherSessions(@RequestHeader(name = "Authorization", required = false) String refreshToken) {
-        log.info("Revoking other sessions with token: {}", refreshToken);
         return refreshTokenService.revokeOtherTokens(refreshToken);
     }
-
     
 }
