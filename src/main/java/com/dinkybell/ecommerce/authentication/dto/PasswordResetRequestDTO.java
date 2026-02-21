@@ -2,7 +2,8 @@ package com.dinkybell.ecommerce.authentication.dto;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotEmpty;
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
 /**
  * Data Transfer Object for password reset requests.
@@ -10,7 +11,8 @@ import lombok.Data;
  * This DTO captures the email address needed to initiate a password reset
  * process.
  */
-@Data
+@Getter
+@Setter
 public class PasswordResetRequestDTO {
 
     /**
@@ -19,4 +21,5 @@ public class PasswordResetRequestDTO {
     @NotEmpty(message = "Email is required")
     @Email(message = "Email should be valid")
     private String email;
+    
 }

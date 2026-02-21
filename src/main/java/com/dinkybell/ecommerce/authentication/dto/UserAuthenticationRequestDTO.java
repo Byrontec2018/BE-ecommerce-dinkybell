@@ -5,7 +5,8 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
 /**
  * Data Transfer Object for authentication requests.
@@ -13,7 +14,8 @@ import lombok.Data;
  * This DTO captures and validates the credentials needed for both registration and login
  * operations. It includes comprehensive validation rules to ensure security requirements are met.
  */
-@Data
+@Getter
+@Setter
 public class UserAuthenticationRequestDTO {
 
     /**
@@ -32,7 +34,6 @@ public class UserAuthenticationRequestDTO {
     @NotNull(message = "Password is required")
     @NotBlank(message = "Password cannot be blank")
     @Size(min = 8, max = 128, message = "Password must be between 8 and 128 characters")
-    @Pattern(regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d).+$",
-            message = "Password must contain at least one uppercase letter, one lowercase letter, and one digit")
+    @Pattern(regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d).+$", message = "Password must contain at least one uppercase letter, one lowercase letter, and one digit")
     private String password;
 }
