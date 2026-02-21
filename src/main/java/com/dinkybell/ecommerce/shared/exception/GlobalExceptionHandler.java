@@ -2,6 +2,7 @@ package com.dinkybell.ecommerce.shared.exception;
 
 import java.util.List;
 
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.mail.MailAuthenticationException;
@@ -82,6 +83,40 @@ public class GlobalExceptionHandler {
                                 null,
                                 null
                 );
+
+        }
+
+        /**
+         * Handles custom rate limit exceeded exceptions with detailed information.
+         * 
+         * This handler catches RateLimitExceededException thrown by the custom Redis-based
+         * rate limiter when the configured request limit is exceeded. It returns a 429 Too
+         * Many Requests response with detailed information about the rate limit violation,
+         * including the Retry-After header indicating when the client can retry.
+         * 
+         * @param ex The rate limit exceeded exception with metadata
+         * @return ResponseEntity with 429 Too Many Requests status, Retry-After header, and error details
+         */
+        @ExceptionHandler(RateLimitExceededException.class)
+        public ResponseEntity<APIResponseDTO<Object>> handleRateLimitExceeded(RateLimitExceededException ex) {
+
+                log.warn("Rate limit exceeded for limiter '{}': max {} requests, retry after {} seconds",
+                        ex.getLimiterName(), ex.getMaxRequests(), ex.getRetryAfterSeconds());
+
+                // Create response with Retry-After header
+                HttpHeaders headers = new HttpHeaders();
+                headers.add("Retry-After", String.valueOf(ex.getRetryAfterSeconds()));
+                
+                APIResponseDTO<Object> body = APIResponseDTO.<Object>builder()
+                                .status(HttpStatus.TOO_MANY_REQUESTS.value())
+                                .message("Rate limit exceeded. Please wait before trying again.")
+                                .data(null)
+                                .errors(List.of(String.format("Maximum %d requests allowed. Retry after %d seconds.",
+                                        ex.getMaxRequests(), ex.getRetryAfterSeconds())))
+                                .timestamp(java.time.LocalDateTime.now())
+                                .build();
+
+                return new ResponseEntity<>(body, headers, HttpStatus.TOO_MANY_REQUESTS);
 
         }
 

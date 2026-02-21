@@ -84,21 +84,18 @@ public class PasswordResetService {
      * @return ResponseEntity with success message
      * @throws TokenExpiredException if the reset token is invalid or expired
      */
-    public ResponseEntity<APIResponseDTO<Object>> resetPassword(PasswordResetConfirmDTO resetData) {
+    public ResponseEntity<APIResponseDTO<Object>> resetPassword(PasswordResetConfirmDTO resetData) {        
 
-        String token = resetData.getToken();
-        String newPassword = resetData.getNewPassword();
-
-        UserAuthentication authentication = authenticationRepository.findByResetPasswordToken(token);
+        UserAuthentication authentication = authenticationRepository.findByResetPasswordToken(resetData.getToken());
 
         if (authentication == null
                 || authentication.getResetPasswordTokenExpiry() == null
                 || authentication.getResetPasswordTokenExpiry().isBefore(LocalDateTime.now())) {
-            log.warn("Invalid or expired password reset token used: {}", token);
+            log.warn("Invalid or expired password reset token used: {}", resetData.getToken());
             throw new TokenExpiredException("Invalid or expired reset token. Please request a new password reset.");
         }
 
-        String hashedPassword = passwordEncoder.encode(newPassword);
+        String hashedPassword = passwordEncoder.encode(resetData.getNewPassword());
 
         authentication.setPassword(hashedPassword);
         authentication.setResetPasswordToken(null);
@@ -112,4 +109,5 @@ public class PasswordResetService {
                 null, null);
 
     }
+    
 }
