@@ -51,9 +51,7 @@ public class UserAthenticationController {
     @RateLimiter(name = "register")
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody @Valid UserAuthenticationRequestDTO registerRequest) {  
-
         return userRegistrationService.registerUser(registerRequest);
-
     }
 
     /**
@@ -67,9 +65,7 @@ public class UserAthenticationController {
      */
     @GetMapping("/confirm-email")
     public ResponseEntity<?> confirmEmail(@RequestParam @Valid TokenRequestDTO token) {  
-
         return userRegistrationService.confirmEmail(token);
-
     }
 
     /**
@@ -85,9 +81,7 @@ public class UserAthenticationController {
     @RateLimiter(name = "login")
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody @Valid UserAuthenticationRequestDTO loginRequest, HttpServletRequest request) {
-
         return userLoginService.loginUser(loginRequest, request);
-
     }
 
     /**
@@ -102,9 +96,7 @@ public class UserAthenticationController {
      */
     @GetMapping("/logout")
     public ResponseEntity<?> logout(HttpServletRequest request) {
-
         return userLoginService.logoutUser(request);
-
     }
     
     /**
@@ -119,9 +111,7 @@ public class UserAthenticationController {
     @RateLimiter(name = "resetPassword")
     @PostMapping("/forgot-password")
     public ResponseEntity<?> forgotPassword(@RequestBody @Valid PasswordResetRequestDTO requestDTO) {
-
         return passwordResetService.requestPasswordReset(requestDTO);
-
     }
     
     /**
@@ -133,13 +123,13 @@ public class UserAthenticationController {
      * @return ResponseEntity with success message or error details
      */
     @RateLimiter(name = "confirmResetPassword")
-    //@PostMapping("/reset-password")
-    //public ResponseEntity<?> resetPassword(@RequestBody @Valid PasswordResetConfirmDTO resetDTO) {
-    @GetMapping("/reset-password")
-    public ResponseEntity<?> resetPassword(@RequestParam String token, @RequestParam String newPassword) {
-        PasswordResetConfirmDTO resetDTO = new PasswordResetConfirmDTO();
-        resetDTO.setToken(token);
-        resetDTO.setNewPassword(newPassword);
+    @PostMapping("/reset-password")
+    public ResponseEntity<?> resetPassword(@RequestBody @Valid PasswordResetConfirmDTO resetDTO) {
+    //@GetMapping("/reset-password")
+    //public ResponseEntity<?> resetPassword(@RequestParam String token, @RequestParam String newPassword) {
+        //PasswordResetConfirmDTO resetDTO = new PasswordResetConfirmDTO();
+        //resetDTO.setToken(token);
+        //resetDTO.setNewPassword(newPassword);
         return passwordResetService.resetPassword(resetDTO);
     }    
  

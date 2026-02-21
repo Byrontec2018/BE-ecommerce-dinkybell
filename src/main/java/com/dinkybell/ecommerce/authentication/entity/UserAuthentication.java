@@ -33,7 +33,6 @@ import lombok.ToString;
 @NoArgsConstructor
 @Getter
 @Setter
-@ToString
 @Entity
 @Table(name = "users_authentication",
         uniqueConstraints = {@UniqueConstraint(columnNames = {"email"})})
