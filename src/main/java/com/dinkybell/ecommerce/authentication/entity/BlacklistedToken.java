@@ -9,9 +9,9 @@ import jakarta.persistence.Index;
 import jakarta.persistence.Table;
 import jakarta.persistence.Temporal;
 import jakarta.persistence.TemporalType;
-import lombok.AllArgsConstructor;
-import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 /**
  * Entity representing a blacklisted (invalidated) JWT token.
@@ -21,9 +21,9 @@ import lombok.NoArgsConstructor;
  * expiryDate field to optimize cleanup operations.
  */
 @Entity
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
-@AllArgsConstructor
 @Table(name = "token_blacklist",
         indexes = {@Index(name = "idx_expiry_date", columnList = "expiryDate")})
 public class BlacklistedToken {

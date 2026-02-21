@@ -6,6 +6,8 @@ import java.util.Collection;
 import java.util.Date;
 
 import org.springframework.lang.NonNull;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.CredentialsExpiredException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -16,9 +18,11 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import com.dinkybell.ecommerce.authentication.entity.UserAuthentication;
+import com.dinkybell.ecommerce.authentication.handler.JwtAuthenticationEntryPoint;
 import com.dinkybell.ecommerce.authentication.repository.UserAuthenticationRepository;
 import com.dinkybell.ecommerce.authentication.service.TokenBlacklistService;
 import com.dinkybell.ecommerce.authentication.util.JwtUtil;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -43,6 +47,29 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     private final JwtUtil jwtUtil;
     private final UserAuthenticationRepository userAuthRepository;
     private final TokenBlacklistService tokenBlacklistService;
+    private final JwtAuthenticationEntryPoint entryPoint;
+
+    /**
+     * Determines if the current request should not be filtered by this JWT filter.
+     * 
+     * This method checks if the request path matches any of the public endpoints
+     * that do not require authentication.
+     * 
+     * @param request The HTTP request
+     * @return true if the request should not be filtered, false otherwise
+     */
+    @Override
+    protected boolean shouldNotFilter(@NonNull HttpServletRequest request) {
+
+        String path = request.getServletPath();
+
+        return path.startsWith("/api/v1/auth/") ||
+               path.startsWith("/api/v1/public/") ||
+               path.equals("/actuator/health") ||
+               path.startsWith("/swagger-ui/") ||
+               path.startsWith("/v3/api-docs/") ||
+               path.equals("/users/public");
+    }
 
     /**
      * Processes each request to check for and validate JWT tokens.
@@ -60,43 +87,56 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             @NonNull HttpServletRequest request,
             @NonNull HttpServletResponse response,
             @NonNull FilterChain filterChain) throws ServletException, IOException {
-        
+           
         // Get authorization header
         final String authHeader = request.getHeader("Authorization");
 
-        // Check if Authorization header exists and starts with "Bearer "
+        // Check if Authorization header is null or does not start with "Bearer"
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+
             log.info("No Bearer token found in request headers");
+
             filterChain.doFilter(request, response);
+
             return;
+
         }
         
-        // Extract token by removing "Bearer " prefix
+        // Extract token by removing "Bearer" prefix
         final String token = authHeader.substring(7);
-        log.info("Token estratto dall'Header!");
+        
+        log.info("extracted from Authorization header");
         
         try {
 
             // Check if token is expired
             if (jwtUtil.isTokenExpired(token)) {
+
                 log.info("Token scaduto o non valido - restituisco risposta 401 con header specifico");
+
                 // Add a specific header to indicate token expiration
                 response.setHeader("X-Token-Expired", "true");
-                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                response.getWriter().write("{\"error\":\"Token JWT scaduto. È necessario richiedere un nuovo token.\"}");
+                entryPoint.commence(request, response,
+                    new CredentialsExpiredException("Token JWT scaduto. È necessario richiedere un nuovo token."));
                 return;
-            }
-
+                
+            } 
+            
             // Extract JWT ID to check if token is blacklisted
             String jti = jwtUtil.extractJti(token);
+
             log.info("JWT ID estratto: {}", jti);
+
             if (tokenBlacklistService.isBlacklisted(jti)) {
-                // Token is blacklisted (user logged out), return 401 with specific header
+
+                // Token is blacklisted (user logged out), return 401 with specific header                
                 log.info("Token è in blacklist - restituisco risposta 401 con header specifico");
+
                 response.setHeader("X-Token-Blacklisted", "true");
-                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                response.getWriter().write("{\"error\":\"Token JWT invalidato (logout). È necessario effettuare nuovamente il login.\"}");
+                entryPoint.commence(request, response,
+                    new BadCredentialsException("Token JWT invalidato (logout). È necessario effettuare nuovamente il login."));
                 return;
+
             }                    
 
             // Extract email from token
@@ -121,7 +161,13 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                     
                     // Create user details
                     UserDetails userDetails = new User(userAuth.getEmail(), 
-                            userAuth.getPassword(), userAuth.isEnabled(), true, true, true, authorities);
+                            userAuth.getPassword(), 
+                            userAuth.isActive(), 
+                            true, 
+                            true, 
+                            true, 
+                            authorities
+                    );
                     
                     // Create authentication token
                     UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
@@ -137,24 +183,24 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         } catch (io.jsonwebtoken.security.SignatureException e) {
             // JWT signature is invalid (app restart with new keys)
             log.warn("JWT signature validation failed: {}", e.getMessage());
-            response.setHeader("X-Token-Invalid", "true");
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            response.getWriter().write("{\"error\":\"Token JWT non valido. È necessario effettuare nuovamente il login.\"}");
-            return;
+                response.setHeader("X-Token-Invalid", "true");
+                entryPoint.commence(request, response,
+                    new BadCredentialsException("Token JWT non valido. È necessario effettuare nuovamente il login."));
+                return;
         } catch (io.jsonwebtoken.ExpiredJwtException e) {
             // Token is expired
             log.info("JWT expired at {}, current time: {}", e.getClaims().getExpiration(), new Date());
-            response.setHeader("X-Token-Expired", "true");
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            response.getWriter().write("{\"error\":\"Token JWT scaduto. È necessario richiedere un nuovo token.\"}");
-            return;
+                response.setHeader("X-Token-Expired", "true");
+                entryPoint.commence(request, response,
+                    new CredentialsExpiredException("Token JWT scaduto. È necessario richiedere un nuovo token."));
+                return;
         } catch (Exception e) {
             // Log error and return appropriate response
             log.error("Error processing JWT token", e);
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            response.getWriter().write("{\"error\":\"Errore di autenticazione\"}");
-            return;
-        }
+                entryPoint.commence(request, response,
+                    new BadCredentialsException("Errore di autenticazione"));
+                return;
+        } 
         
         // Continue filter chain
         filterChain.doFilter(request, response);

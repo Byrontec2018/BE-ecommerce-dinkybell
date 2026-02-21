@@ -6,10 +6,14 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
+
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+
 import com.dinkybell.ecommerce.authentication.config.JwtAuthFilter;
+import com.dinkybell.ecommerce.authentication.handler.JwtAuthenticationEntryPoint;
+
 import lombok.RequiredArgsConstructor;
 
 /**
@@ -30,6 +34,7 @@ import lombok.RequiredArgsConstructor;
 public class SecurityConfig {
 
     private final JwtAuthFilter jwtAuthFilter;
+    private final JwtAuthenticationEntryPoint entryPoint;
 
     /**
      * Creates the primary password encoder bean using modern Argon2id algorithm.
@@ -59,10 +64,21 @@ public class SecurityConfig {
      * @throws Exception If configuration fails
      */
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http
+    SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+
+        return http
+
             // Disable CSRF as we're using stateless JWT authentication
             .csrf(AbstractHttpConfigurer::disable)
+
+            // Configure session management to be stateless
+            .sessionManagement(session -> session
+                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+            )
+
+            // Disable form login and HTTP Basic            
+            .formLogin(AbstractHttpConfigurer::disable)
+            .httpBasic(AbstractHttpConfigurer::disable)
             
             // Configure authorization rules
             .authorizeHttpRequests(auth -> auth
@@ -75,20 +91,17 @@ public class SecurityConfig {
                 // Protected endpoints
                 .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
                 .anyRequest().authenticated()
+            )           
+
+            // Use custom entry point for authentication failures
+            .exceptionHandling(exceptions -> exceptions
+                .authenticationEntryPoint(entryPoint)
             )
-            
-            // Configure session management to be stateless
-            .sessionManagement(session -> session
-                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-            )
-            
-            // Disable form login and HTTP Basic
-            .httpBasic(AbstractHttpConfigurer::disable)
-            .formLogin(AbstractHttpConfigurer::disable)
             
             // Add JWT filter before the standard authentication filter
-            .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
-            
-        return http.build();
+            .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)            
+            .build();
+
     }
+
 }
