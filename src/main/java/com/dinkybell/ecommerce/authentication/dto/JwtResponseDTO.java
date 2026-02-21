@@ -15,10 +15,11 @@ import lombok.Setter;
  * successful authentication. It includes the access token, refresh token, token type (Bearer), 
  * the authenticated user's email, and the token's expiration time.
  */
-@Getter
-@Setter
+
 @AllArgsConstructor
 @NoArgsConstructor
+@Getter
+@Setter
 public class JwtResponseDTO {
     /**
      * The JWT token string to be used for authentication (access token).

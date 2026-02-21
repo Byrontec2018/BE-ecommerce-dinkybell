@@ -47,8 +47,7 @@ public class CustomRedisRateLimitService {
      * @param windowSeconds Time window duration in seconds
      * @return true if request is allowed, false if rate limit exceeded
      */
-    public boolean isAllowed(String key, int maxRequests, int windowSeconds) {
-
+    public boolean isAllowed(String key, int maxRequests, long windowSeconds) {
         try {
 
             String redisKey = RATE_LIMIT_PREFIX + key;
