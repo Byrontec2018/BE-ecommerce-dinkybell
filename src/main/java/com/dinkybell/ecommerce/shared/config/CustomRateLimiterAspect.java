@@ -9,6 +9,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import com.dinkybell.ecommerce.shared.exception.RateLimitExceededException;
+
 import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 
 /**
@@ -111,8 +113,15 @@ public class CustomRateLimiterAspect {
         if (!allowed) {
             log.warn("Rate limit exceeded for key: {} on limiter: {}", customKey, limiterName);
             
-            // Create custom exception for rate limiting
-            RuntimeException ex = new RuntimeException("Rate limit exceeded for " + limiterName);
+            // Get time to reset for better error messaging
+            long retryAfterSeconds = rateLimitService.getTimeToReset(customKey);
+            
+            // Create custom exception for rate limiting with detailed information
+            RateLimitExceededException ex = new RateLimitExceededException(
+                limiterName, 
+                retryAfterSeconds, 
+                config.getMaxRequests()
+            );
             
             // Call the fallback method if specified
             if (!fallbackMethod.isEmpty()) {

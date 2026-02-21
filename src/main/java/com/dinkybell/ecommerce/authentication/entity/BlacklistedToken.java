@@ -12,8 +12,6 @@ import jakarta.persistence.TemporalType;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-
-
 /**
  * Entity representing a blacklisted (invalidated) JWT token.
  * 

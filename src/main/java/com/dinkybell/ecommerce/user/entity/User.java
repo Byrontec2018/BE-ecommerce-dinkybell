@@ -5,7 +5,9 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import lombok.AccessLevel;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 
@@ -15,13 +17,14 @@ import lombok.ToString;
  * This entity stores core user data including: - User ID (primary key) - Email (used as username) -
  * Password (encrypted) - Role (user permission level)
  * 
- * This entity is mapped to the "users" table in the database.
+ * This entity is mapped to the "users" table in the database. Lombok generates the
+ * accessor methods for the fields.
  */
 @Entity
 @Table(name = "users")
 @Getter
 @Setter
-@ToString
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class User {
 
     /**
