@@ -21,6 +21,14 @@ applyTo: '**/*.java, **/*.kt'
 - Declare dependency fields as `private final`.
 - **Migration Note**: This project is transitioning from field injection (`@Autowired`) to constructor injection.
 
+### Lombok Best Practices
+
+- Prefer focused Lombok annotations (`@Getter`, `@Setter`, `@ToString`, `@EqualsAndHashCode`) over `@Data` when you need tighter control.
+- For JPA entities, avoid `@EqualsAndHashCode` on mutable fields and be cautious with `@ToString` on lazy-loaded relationships (use `@ToString.Exclude`).
+- Use `@Builder` for complex object creation, but keep it off JPA entities unless you also provide required constructors.
+- Use `@Slf4j` for logging instead of manual logger declarations.
+- Keep Lombok annotations on classes only when they reduce noise; do not add them if they obscure logic or intent.
+
 ### Configuration
 
 - Use YAML files (`application.yml`) for externalized configuration.
