@@ -46,6 +46,11 @@ Desktop.ini
 .sh
 *.sh
 
+# Application Configuration
+src/main/resources/application.yml
+src/main/resources/application*.properties
+!src/main/resources/application.yml.example
+
 # IDE-specific (optional, puoi aggiungerli se in futuro usi IntelliJ o Eclipse)
 # .idea/
 # .project

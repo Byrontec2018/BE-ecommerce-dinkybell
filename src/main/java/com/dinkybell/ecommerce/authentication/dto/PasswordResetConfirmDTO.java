@@ -30,4 +30,5 @@ public class PasswordResetConfirmDTO {
     @Pattern(regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d).+$",
             message = "Password must contain at least one uppercase letter, one lowercase letter, and one digit")
     private String newPassword;
+    
 }

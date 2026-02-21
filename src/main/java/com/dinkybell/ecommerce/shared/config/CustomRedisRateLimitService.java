@@ -49,10 +49,12 @@ public class CustomRedisRateLimitService {
      */
     public boolean isAllowed(String key, int maxRequests, long windowSeconds) {
         try {
+
             String redisKey = RATE_LIMIT_PREFIX + key;
             
             // Get current count
             String currentCountStr = redisTemplate.opsForValue().get(redisKey);
+            
             int currentCount = currentCountStr != null ? Integer.parseInt(currentCountStr) : 0;
             
             if (currentCount >= maxRequests) {
