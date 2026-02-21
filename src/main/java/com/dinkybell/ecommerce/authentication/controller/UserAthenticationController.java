@@ -1,14 +1,10 @@
 package com.dinkybell.ecommerce.authentication.controller;
 
-import java.util.Map;
-
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -16,10 +12,12 @@ import jakarta.servlet.http.HttpServletRequest;
 
 import com.dinkybell.ecommerce.authentication.dto.PasswordResetConfirmDTO;
 import com.dinkybell.ecommerce.authentication.dto.PasswordResetRequestDTO;
+import com.dinkybell.ecommerce.authentication.dto.TokenRequestDTO;
 import com.dinkybell.ecommerce.authentication.dto.UserAuthenticationRequestDTO;
-import com.dinkybell.ecommerce.authentication.service.UserAuthenticationService;
+import com.dinkybell.ecommerce.authentication.service.UserLoginService;
+import com.dinkybell.ecommerce.authentication.service.PasswordResetService;
+import com.dinkybell.ecommerce.authentication.service.UserRegistrationService;
 import lombok.RequiredArgsConstructor;
-
 import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 import jakarta.validation.Valid;
 
@@ -36,9 +34,10 @@ import jakarta.validation.Valid;
 @RequiredArgsConstructor
 @Slf4j
 public class UserAthenticationController {
-
-    /** Service that handles user authentication business logic */
-    private final UserAuthenticationService userAuthenticationService;
+    
+    private final UserLoginService userLoginService;
+    private final UserRegistrationService userRegistrationService;
+    private final PasswordResetService passwordResetService;
 
     /**
      * Handles user registration requests.
@@ -49,11 +48,12 @@ public class UserAthenticationController {
      * @param registerRequest DTO containing email and password
      * @return ResponseEntity with success message or error details
      */
-    @RateLimiter(name = "register", fallbackMethod = "registerFallback")
+    @RateLimiter(name = "register")
     @PostMapping("/register")
-    public ResponseEntity<?> register(@RequestBody @Valid UserAuthenticationRequestDTO registerRequest) {        
-        return userAuthenticationService.registerUser(registerRequest.getEmail(),
-                registerRequest.getPassword());
+    public ResponseEntity<?> register(@RequestBody @Valid UserAuthenticationRequestDTO registerRequest) {  
+
+        return userRegistrationService.registerUser(registerRequest);
+
     }
 
     /**
@@ -66,8 +66,10 @@ public class UserAthenticationController {
      * @return ResponseEntity with success message or error details
      */
     @GetMapping("/confirm-email")
-    public ResponseEntity<?> confirmEmail(@RequestParam String token) {        
-        return userAuthenticationService.confirmEmail(token);
+    public ResponseEntity<?> confirmEmail(@RequestParam @Valid TokenRequestDTO token) {  
+
+        return userRegistrationService.confirmEmail(token);
+
     }
 
     /**
@@ -80,25 +82,29 @@ public class UserAthenticationController {
      * @param loginRequest DTO containing email and password credentials
      * @return ResponseEntity with JWT token or error details
      */
-    @RateLimiter(name = "login", fallbackMethod = "loginFallback")
+    @RateLimiter(name = "login")
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody @Valid UserAuthenticationRequestDTO loginRequest, HttpServletRequest request) {
-        return userAuthenticationService.loginUser(loginRequest.getEmail(),
-                loginRequest.getPassword(), request);
+
+        return userLoginService.loginUser(loginRequest, request);
+
     }
 
     /**
      * Handles user logout requests.
      * 
      * This endpoint invalidates the user's JWT token by adding it to a blacklist, preventing
-     * further use of the token until its natural expiration time.
+     * further use of the token until its natural expiration time. The token must be provided
+     * in the Authorization header as "Bearer <token>".
      * 
-     * @param authHeader The Authorization header containing the JWT token
+     * @param request The HTTP request containing the Authorization header with the JWT token
      * @return ResponseEntity with success message or error details
      */
     @GetMapping("/logout")
-    public ResponseEntity<?> logout(@RequestHeader(value = "Authorization", required = false) String authHeader) {
-        return userAuthenticationService.logoutUser(authHeader);
+    public ResponseEntity<?> logout(HttpServletRequest request) {
+
+        return userLoginService.logoutUser(request);
+
     }
     
     /**
@@ -110,10 +116,12 @@ public class UserAthenticationController {
      * @param requestDTO DTO containing the user's email address
      * @return ResponseEntity with success message or error details
      */
-    @RateLimiter(name = "resetPassword", fallbackMethod = "resetPasswordFallback")
+    @RateLimiter(name = "resetPassword")
     @PostMapping("/forgot-password")
     public ResponseEntity<?> forgotPassword(@RequestBody @Valid PasswordResetRequestDTO requestDTO) {
-        return userAuthenticationService.requestPasswordReset(requestDTO);
+
+        return passwordResetService.requestPasswordReset(requestDTO);
+
     }
     
     /**
@@ -124,62 +132,15 @@ public class UserAthenticationController {
      * @param resetDTO DTO containing the token and new password
      * @return ResponseEntity with success message or error details
      */
-    @RateLimiter(name = "confirmResetPassword", fallbackMethod = "confirmResetPasswordFallback")
-    @PostMapping("/reset-password")
-    public ResponseEntity<?> resetPassword(@RequestBody @Valid PasswordResetConfirmDTO resetDTO) {
-        return userAuthenticationService.resetPassword(resetDTO);
-    }
-
-    // ============================================
-    // Fallback Methods for Rate Limiting
-    // ============================================
-
-    /**
-     * Fallback method for register endpoint when rate limit is exceeded.
-     */
-    public ResponseEntity<?> registerFallback(UserAuthenticationRequestDTO registerRequest, RuntimeException ex) {
-        return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body(Map.of(
-            "error", "Registration rate limit exceeded",
-            "message", "Too many registration attempts. Please wait 10 minutes before trying again.",
-            "code", "REGISTRATION_RATE_LIMIT_EXCEEDED",
-            "suggestedWaitTime", "600 seconds"
-        ));
-    }
-
-    /**
-     * Fallback method for login endpoint when rate limit is exceeded.
-     */
-    public ResponseEntity<?> loginFallback(UserAuthenticationRequestDTO loginRequest, HttpServletRequest request, RuntimeException ex) {
-        return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body(Map.of(
-            "error", "Login rate limit exceeded",
-            "message", "Too many login attempts. Please wait 5 minutes before trying again.",
-            "code", "LOGIN_RATE_LIMIT_EXCEEDED",
-            "suggestedWaitTime", "300 seconds"
-        ));
-    }
-
-    /**
-     * Fallback method for forgot password endpoint when rate limit is exceeded.
-     */
-    public ResponseEntity<?> resetPasswordFallback(PasswordResetRequestDTO requestDTO, RuntimeException ex) {
-        return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body(Map.of(
-            "error", "Password reset rate limit exceeded",
-            "message", "Too many password reset requests. Please wait 15 minutes before trying again.",
-            "code", "PASSWORD_RESET_RATE_LIMIT_EXCEEDED",
-            "suggestedWaitTime", "900 seconds"
-        ));
-    }
-
-    /**
-     * Fallback method for reset password confirmation endpoint when rate limit is exceeded.
-     */
-    public ResponseEntity<?> confirmResetPasswordFallback(PasswordResetConfirmDTO resetDTO, RuntimeException ex) {
-        return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body(Map.of(
-            "error", "Password reset confirmation rate limit exceeded",
-            "message", "Too many password reset confirmation attempts. Please wait 10 minutes before trying again.",
-            "code", "PASSWORD_RESET_CONFIRMATION_RATE_LIMIT_EXCEEDED",
-            "suggestedWaitTime", "600 seconds"
-        ));
-    }
-
+    @RateLimiter(name = "confirmResetPassword")
+    //@PostMapping("/reset-password")
+    //public ResponseEntity<?> resetPassword(@RequestBody @Valid PasswordResetConfirmDTO resetDTO) {
+    @GetMapping("/reset-password")
+    public ResponseEntity<?> resetPassword(@RequestParam String token, @RequestParam String newPassword) {
+        PasswordResetConfirmDTO resetDTO = new PasswordResetConfirmDTO();
+        resetDTO.setToken(token);
+        resetDTO.setNewPassword(newPassword);
+        return passwordResetService.resetPassword(resetDTO);
+    }    
+ 
 }

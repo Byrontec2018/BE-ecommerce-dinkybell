@@ -58,7 +58,7 @@ public class UserController {
             response.put("id", user.getId());
             response.put("email", user.getEmail());
             response.put("role", user.getRole());
-            response.put("enabled", user.isEnabled());
+            response.put("active", user.isActive());
             response.put("message", "JWT Authentication successful!");
         } else {
             response.put("error", "User not found");

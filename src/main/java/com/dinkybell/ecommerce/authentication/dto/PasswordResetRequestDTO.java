@@ -21,4 +21,5 @@ public class PasswordResetRequestDTO {
     @NotEmpty(message = "Email is required")
     @Email(message = "Email should be valid")
     private String email;
+    
 }

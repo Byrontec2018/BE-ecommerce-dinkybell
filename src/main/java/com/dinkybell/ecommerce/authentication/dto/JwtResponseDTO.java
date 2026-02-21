@@ -15,6 +15,7 @@ import lombok.Setter;
  * successful authentication. It includes the access token, refresh token, token type (Bearer), 
  * the authenticated user's email, and the token's expiration time.
  */
+
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter
@@ -58,7 +59,10 @@ public class JwtResponseDTO {
         this.refreshToken = refreshToken;
         this.email = email;
         this.expirationTime =
-                LocalDateTime.ofInstant(expiration.toInstant(), ZoneId.systemDefault());
+                LocalDateTime.ofInstant(expiration.toInstant(), 
+                ZoneId.systemDefault()
+            );
+
     }
     
     /**
@@ -72,6 +76,10 @@ public class JwtResponseDTO {
         this.token = token;
         this.email = email;
         this.expirationTime =
-                LocalDateTime.ofInstant(expiration.toInstant(), ZoneId.systemDefault());
+                LocalDateTime.ofInstant(expiration.toInstant(), 
+                ZoneId.systemDefault()
+            );    
+            
     }
+
 }

@@ -2,7 +2,6 @@ package com.dinkybell.ecommerce.authentication.entity;
 
 import java.time.LocalDateTime;
 import com.dinkybell.ecommerce.shared.enums.Role;
-// import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -10,8 +9,6 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-// import jakarta.persistence.JoinColumn;
-// import jakarta.persistence.OneToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
@@ -88,10 +85,10 @@ public class UserAuthentication {
     private Role role = Role.USER;
 
     /**
-     * Flag indicating if the account is active. Accounts are disabled until email is confirmed.
+     * Flag indicating if the account is active. Accounts are inactive until email is confirmed.
      */
     @Column(nullable = false)
-    private boolean enabled = false;
+    private boolean active = false;
 
     /**
      * Timestamp when the email was confirmed. Null if email hasn't been confirmed yet.

@@ -6,6 +6,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -63,6 +64,10 @@ public class RefreshTokenService {
     @Transactional
     public RefreshToken createRefreshToken(Long userId, HttpServletRequest request) {
         // Check if user exists
+        if (userId == null) {
+            throw new IllegalArgumentException("User ID cannot be null");
+        }
+
         userAuthenticationRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("User not found with ID: " + userId));
         
@@ -92,14 +97,15 @@ public class RefreshTokenService {
                         oldestToken.setRevoked(true);
                         refreshTokenRepository.save(oldestToken);
                         log.debug("Revoked oldest token for user {} due to limit", userId);
-                    });
+                    }
+                );
             }
         }
         
-        // Create and save new token
+        // Create and save new refresh token
         RefreshToken refreshToken = new RefreshToken();
-        refreshToken.setUserId(userId.longValue());
-        refreshToken.setToken(UUID.randomUUID().toString());
+        refreshToken.setUserId(userId);
+        refreshToken.setToken(UUID.randomUUID().toString()); //TODO: Consider using a more secure token generation strategy if needed
         refreshToken.setExpiryDate(Instant.now().plusMillis(refreshTokenDurationMs));
         refreshToken.setDeviceInfo(deviceInfo);
         refreshToken.setCreatedAt(Instant.now());
@@ -123,53 +129,43 @@ public class RefreshTokenService {
      * @return A new JWT access token
      * @throws RefreshTokenException if the token is invalid, expired, or revoked
      */
-    @Transactional
-    public String refreshAccessToken(String token) {
-        RefreshToken refreshToken = verifyRefreshToken(token);
-        
-        // Update last used timestamp (sliding window expiry)
-        refreshToken.setLastUsedAt(Instant.now());
-        refreshTokenRepository.save(refreshToken);
-        
-        // Find the associated user authentication
-        Integer userId = refreshToken.getUserId().intValue();
-        userAuthenticationRepository.findById(userId)
-                .orElseThrow(() -> new RefreshTokenException("User not found for this token"));
-        
-        UserAuthentication userAuth = userAuthenticationRepository.findById(userId)
-                .orElseThrow(() -> new RefreshTokenException("User authentication not found for this token"));
-        
-        // Generate new JWT
-        String newAccessToken = jwtUtil.generateToken(userAuth);
-        log.debug("Generated new access token for user {}", refreshToken.getUserId());
-        
-        return newAccessToken;
-    }
     
     /**
-     * Validates a refresh token and generates a new JWT access token with response entity.
+     * Validates a refresh token and generates a new JWT access token.
+     * Returns standardized APIResponseDTO with JWT details.
      * 
      * This method:
      * 1. Verifies the token exists and is valid
-     * 2. Optionally rotates the refresh token for enhanced security
-     * 3. Updates the last used timestamp 
-     * 4. Generates a new JWT access token
+     * 2. Updates the last used timestamp (sliding window)
+     * 3. Generates a new JWT access token
+     * 4. Returns response following APIResponseDTO pattern
      * 
-     * @param token The refresh token string
-     * @param request The HTTP request (for device info if rotating tokens)
-     * @return ResponseEntity with new tokens
+     * @param token The refresh token string (already extracted from Bearer header)
+     * @return ResponseEntity with APIResponseDTO containing JWT data
      * @throws RefreshTokenException if the token is invalid, expired, or revoked
      */
     @Transactional
-    public ResponseEntity<?> refreshAccessToken(String token, HttpServletRequest request) {
+    public ResponseEntity<?> refreshAccessToken(String token) {
+
+        log.debug("Processing token refresh request");
+
+        // Extract token from Bearer header format
+        token = extractTokenFromBearerHeader(token);
+
+        // Verify the refresh token
         RefreshToken refreshToken = verifyRefreshToken(token);
+
+        log.debug("Refresh token verified for user {}", refreshToken.getUserId());
         
         // Update last used timestamp (sliding window expiry)
         refreshToken.setLastUsedAt(Instant.now());
         refreshTokenRepository.save(refreshToken);
         
         // Find the associated user authentication
-        Integer userId = refreshToken.getUserId().intValue();
+        Long userId = refreshToken.getUserId();
+        if (userId == null) {
+            throw new RefreshTokenException("User ID is null for this token");
+        }
         UserAuthentication userAuth = userAuthenticationRepository.findById(userId)
                 .orElseThrow(() -> new RefreshTokenException("User authentication not found for this token"));
         
@@ -180,12 +176,19 @@ public class RefreshTokenService {
         // Get token expiration date
         java.util.Date tokenExpirationTime = jwtUtil.extractExpirationDate(newAccessToken);
         
-        // Return JWT token and refresh token
-        return ResponseEntity.ok(new JwtResponseDTO(
+        // Build JWT response data
+        JwtResponseDTO jwtData = new JwtResponseDTO(
                 newAccessToken, 
                 token,
                 userAuth.getEmail(),
-                tokenExpirationTime));
+                tokenExpirationTime);
+        
+        // Return standardized API response
+        return ApiResponseFactory.buildResponse(
+                HttpStatus.OK,
+                "Access token refreshed successfully",
+                jwtData,
+                null);
     }
     
     /**
@@ -195,11 +198,28 @@ public class RefreshTokenService {
      * @throws RefreshTokenException if the token is invalid
      */
     @Transactional
-    public void revokeRefreshToken(String token) {
+    public ResponseEntity<?> revokeRefreshToken(String token) {
+
+        log.info("Attempting to revoke refresh token: {}", token);
+
+        // Extract token from Bearer header format
+        token = extractTokenFromBearerHeader(token);
+
+        // Verify the refresh token
         RefreshToken refreshToken = verifyRefreshToken(token);
+
+        log.debug("Revoking refresh token for user {}", refreshToken.getUserId());
+
+        // Mark the token as revoked
         refreshToken.setRevoked(true);
         refreshTokenRepository.save(refreshToken);
-        log.debug("Revoked refresh token for user {}", refreshToken.getUserId());
+
+        // Return a generic confirmation response
+        return ApiResponseFactory.buildResponse(
+                HttpStatus.OK,
+                "Refresh token revoked successfully",
+                "Token revoked:" + token,
+                null);
     }
     
     /**
@@ -210,11 +230,30 @@ public class RefreshTokenService {
      * @throws RefreshTokenException if the token is invalid
      */
     @Transactional
-    public void revokeOtherTokens(String token) {
+    public ResponseEntity<?> revokeOtherTokens(String token) {
+
+        log.info("Attempting to revoke other sessions for token: {}", token);
+
+        // Extract token from Bearer header format
+        token = extractTokenFromBearerHeader(token);
+
+        // Verify the refresh token
         RefreshToken refreshToken = verifyRefreshToken(token);
+
+        log.info("Revoking other tokens for user {}", refreshToken.getUserId());
+        log.info("Current token ID: {}", refreshToken.getId());
+
+        // Revoke all other tokens for the user except the current one
         int revokedCount = refreshTokenRepository.revokeAllUserTokensExcept(
                 refreshToken.getUserId(), refreshToken.getId());
-        log.debug("Revoked {} other tokens for user {}", revokedCount, refreshToken.getUserId());
+
+        log.info("Revoked {} other tokens for user {}", revokedCount, refreshToken.getUserId());
+
+        return ApiResponseFactory.buildResponse(
+                HttpStatus.OK,
+                "Other sessions revoked successfully",
+                "Revoked " + revokedCount + " other tokens",
+                null);
     }
     
     /**
@@ -253,6 +292,7 @@ public class RefreshTokenService {
      * @throws RefreshTokenException if the token is invalid, expired, or revoked
      */
     private RefreshToken verifyRefreshToken(String token) {
+
         if (token == null) {
             throw new RefreshTokenException("Refresh token is required");
         }
@@ -412,4 +452,30 @@ public class RefreshTokenService {
                !ip.startsWith("fd") &&         // IPv6 private
                ip.matches("^[0-9.]+$|^[0-9a-fA-F:]+$"); // Basic IPv4/IPv6 format check
     }
+
+    /**
+     * Extracts the token value from RFC 6750 Bearer token format.
+     * Expected format: "Bearer <token>"
+     * 
+     * @param bearerToken The Authorization header value
+     * @return The extracted token without "Bearer " prefix
+     * @throws RefreshTokenException if header is missing or invalid format
+     */
+    private String extractTokenFromBearerHeader(String bearerToken) {
+        if (bearerToken == null || bearerToken.isBlank()) {
+            throw new RefreshTokenException("Authorization header is missing");
+        }
+        
+        if (!bearerToken.startsWith("Bearer ")) {
+            throw new RefreshTokenException("Invalid Authorization header format. Expected: Bearer <token>");
+        }
+        
+        String token = bearerToken.substring(7).trim();
+        if (token.isEmpty()) {
+            throw new RefreshTokenException("Refresh token cannot be empty");
+        }
+        
+        return token;
+    }
+
 }
