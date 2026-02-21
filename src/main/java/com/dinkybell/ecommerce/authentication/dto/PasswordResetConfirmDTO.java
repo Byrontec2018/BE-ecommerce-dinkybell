@@ -3,7 +3,8 @@ package com.dinkybell.ecommerce.authentication.dto;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
 /**
  * Data Transfer Object for completing the password reset process.
@@ -11,7 +12,8 @@ import lombok.Data;
  * This DTO contains the necessary fields for validating a reset token
  * and setting a new password.
  */
-@Data
+@Getter
+@Setter
 public class PasswordResetConfirmDTO {
 
     /**
@@ -28,4 +30,5 @@ public class PasswordResetConfirmDTO {
     @Pattern(regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d).+$",
             message = "Password must contain at least one uppercase letter, one lowercase letter, and one digit")
     private String newPassword;
+    
 }

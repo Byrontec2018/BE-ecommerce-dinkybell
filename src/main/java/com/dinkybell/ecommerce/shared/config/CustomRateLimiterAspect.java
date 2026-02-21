@@ -52,6 +52,24 @@ public class CustomRateLimiterAspect {
     @Value("${resilience4j.ratelimiter.instances.confirmResetPassword.limitRefreshPeriod:600s}")
     private String confirmResetPasswordLimitRefreshPeriod;
 
+    @Value("${resilience4j.ratelimiter.instances.refreshToken.limitForPeriod:2}")
+    private int refreshTokenLimitForPeriod;
+    
+    @Value("${resilience4j.ratelimiter.instances.refreshToken.limitRefreshPeriod:600s}")
+    private String refreshTokenLimitRefreshPeriod;   
+
+    @Value("${resilience4j.ratelimiter.instances.revokeToken.limitForPeriod:5}")
+    private int revokeTokenLimitForPeriod;
+
+    @Value("${resilience4j.ratelimiter.instances.revokeToken.limitRefreshPeriod:300s}")
+    private String revokeTokenLimitRefreshPeriod;
+
+    @Value("${resilience4j.ratelimiter.instances.revokeOtherSessions.limitForPeriod:5}")
+    private int revokeOtherSessionsLimitForPeriod;
+
+    @Value("${resilience4j.ratelimiter.instances.revokeOtherSessions.limitRefreshPeriod:300s}")
+    private String revokeOtherSessionsLimitRefreshPeriod;
+
     public CustomRateLimiterAspect(CustomRedisRateLimitService rateLimitService) {
         this.rateLimitService = rateLimitService;
     }
@@ -122,6 +140,12 @@ public class CustomRateLimiterAspect {
                 return new RateLimitConfig(resetPasswordLimitForPeriod, parseSeconds(resetPasswordLimitRefreshPeriod));
             case "confirmResetPassword":
                 return new RateLimitConfig(confirmResetPasswordLimitForPeriod, parseSeconds(confirmResetPasswordLimitRefreshPeriod));
+            case "refreshToken":
+                return new RateLimitConfig(refreshTokenLimitForPeriod, parseSeconds(refreshTokenLimitRefreshPeriod));
+            case "revokeToken":
+                return new RateLimitConfig(revokeTokenLimitForPeriod, parseSeconds(revokeTokenLimitRefreshPeriod));
+            case "revokeOtherSessions":
+                return new RateLimitConfig(revokeOtherSessionsLimitForPeriod, parseSeconds(revokeOtherSessionsLimitRefreshPeriod));
             default:
                 log.warn("Unknown limiter name: {}, using default config", limiterName);
                 return new RateLimitConfig(10, 60); // Default: 10 requests per minute
