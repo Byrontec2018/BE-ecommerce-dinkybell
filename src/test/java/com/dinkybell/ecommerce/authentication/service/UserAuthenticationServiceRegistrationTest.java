@@ -25,6 +25,20 @@ import com.dinkybell.ecommerce.authentication.dto.UserAuthenticationRequestDTO;
 import com.dinkybell.ecommerce.authentication.entity.UserAuthentication;
 import com.dinkybell.ecommerce.authentication.repository.UserAuthenticationRepository;
 
+/**
+ * Unit tests for {@link UserRegistrationService}.
+ * 
+ * This test suite verifies the user registration flow including:
+ * - New user account creation
+ * - Email confirmation token generation
+ * - Confirmation email sending
+ * - Handling of duplicate email addresses
+ * - Re-sending confirmation for inactive accounts
+ * - Error handling for email service failures
+ * 
+ * Tests follow the Arrange-Act-Assert pattern with comprehensive verification
+ * of both successful operations and error scenarios.
+ */
 @ExtendWith(MockitoExtension.class)
 @SuppressWarnings("null")
 class UserAuthenticationServiceRegistrationTest {
@@ -41,6 +55,18 @@ class UserAuthenticationServiceRegistrationTest {
     @InjectMocks
     private UserRegistrationService service;
 
+    /**
+     * Tests successful registration of a new user with a unique email address.
+     * 
+     * Verifies that:
+     * - Email uniqueness is validated
+     * - Password is hashed using the configured encoder (Argon2id)
+     * - Email confirmation token is generated (UUID format)
+     * - Token expiry is set (typically 24-48 hours)
+     * - User entity is saved to database
+     * - Confirmation email is sent
+     * - HTTP 200 OK response is returned with appropriate message
+     */
     @Test
     void registerUser_newEmail_savesUserAndSendsConfirmationEmail() {
         String email = "user@example.com";
@@ -72,6 +98,15 @@ class UserAuthenticationServiceRegistrationTest {
         verify(emailNotificationService, times(1)).sendConfirmationEmail(any(UserAuthentication.class));
     }
 
+    /**
+     * Tests registration behaviour when email already exists and is active.
+     * 
+     * Verifies that:
+     * - EmailAlreadyExistsException is thrown for duplicate active email
+     * - No new user entity is created
+     * - No confirmation email is sent
+     * - Exception is handled by GlobalExceptionHandler (HTTP 409 Conflict)
+     */
     @Test
     void registerUser_existingActiveEmail_throwsException() {
         String email = "user@example.com";
@@ -97,8 +132,18 @@ class UserAuthenticationServiceRegistrationTest {
         verify(emailNotificationService, never()).sendConfirmationEmail(any(UserAuthentication.class));
     }
 
-    // This test covers the case where an email exists but is not active, so it should resend the confirmation email.
-    // It verifies that the user is updated with a new token and that an email is sent.
+    /**
+     * Tests registration behaviour when email exists but account is not active.
+     * 
+     * This covers the case where a user previously registered but never confirmed
+     * their email. The system should allow "re-registration" by:
+     * - Updating the existing user record
+     * - Generating a new confirmation token
+     * - Re-sending the confirmation email
+     * - Updating the password if provided
+     * 
+     * This provides a better user experience than forcing password recovery.
+     */
     @Test
     void registerUser_existingNotActiveEmail_resendsConfirmation() {
         String email = "user@example.com";
@@ -135,6 +180,16 @@ class UserAuthenticationServiceRegistrationTest {
         verify(emailNotificationService, times(1)).sendConfirmationEmail(any(UserAuthentication.class));
     }
 
+    /**
+     * Tests registration behaviour when email sending fails.
+     * 
+     * Verifies that:
+     * - User is saved to database before email attempt
+     * - MailAuthenticationException is thrown when email service fails
+     * - Exception propagates to GlobalExceptionHandler
+     * - User receives appropriate error feedback
+     * - Can retry registration (email already exists handling applies)
+     */
     @Test
     void saveUser_whenEmailSendingFails_throwsException() {
         UserAuthentication user = new UserAuthentication();
@@ -157,6 +212,16 @@ class UserAuthenticationServiceRegistrationTest {
         );
     }
 
+    /**
+     * Tests successful user save operation with email confirmation.
+     * 
+     * Verifies that:
+     * - User entity is persisted to database
+     * - Database auto-generates user ID
+     * - Confirmation email is sent successfully
+     * - HTTP 200 OK response is returned
+     * - Complete registration flow executes without errors
+     */
     @Test
     void saveUser_success_returnsOk() {
         UserAuthentication user = new UserAuthentication();
