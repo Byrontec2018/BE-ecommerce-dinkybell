@@ -3,7 +3,6 @@ package com.dinkybell.ecommerce.authentication.service;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
@@ -12,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.dinkybell.ecommerce.authentication.dto.JwtResponseDTO;
+import com.dinkybell.ecommerce.shared.util.SecureTokenGenerator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import com.dinkybell.ecommerce.authentication.entity.RefreshToken;
@@ -105,7 +105,7 @@ public class RefreshTokenService {
         // Create and save new refresh token
         RefreshToken refreshToken = new RefreshToken();
         refreshToken.setUserId(userId);
-        refreshToken.setToken(UUID.randomUUID().toString()); //TODO: Consider using a more secure token generation strategy if needed
+        refreshToken.setToken(SecureTokenGenerator.generateLongToken()); // 256-bit cryptographically secure token for 30-day validity
         refreshToken.setExpiryDate(Instant.now().plusMillis(refreshTokenDurationMs));
         refreshToken.setDeviceInfo(deviceInfo);
         refreshToken.setCreatedAt(Instant.now());

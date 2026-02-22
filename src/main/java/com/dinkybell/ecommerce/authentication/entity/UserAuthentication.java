@@ -35,8 +35,7 @@ import lombok.ToString;
 @Setter
 @Entity
 @Table(name = "users_authentication",
-        uniqueConstraints = {@UniqueConstraint(columnNames = {"email"})})
-// @UniqueConstraint(columnNames = {"username"})})
+uniqueConstraints = {@UniqueConstraint(columnNames = {"email"})})
 public class UserAuthentication {
 
     /**
@@ -46,10 +45,11 @@ public class UserAuthentication {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // Relationship to user profile - commented out for future implementation
-    // @OneToOne(cascade = CascadeType.ALL)
-    // @JoinColumn(name = "user_id", referencedColumnName = "id", nullable = true)
-    // private User user;
+    /* Relationship to user profile - commented out for future implementation
+       @OneToOne(cascade = CascadeType.ALL)
+       @JoinColumn(name = "user_id", referencedColumnName = "id", nullable = true)
+       private User user;
+    */
 
     /**
      * Username for display and login purposes. Must be 3-20 characters, alphanumeric with

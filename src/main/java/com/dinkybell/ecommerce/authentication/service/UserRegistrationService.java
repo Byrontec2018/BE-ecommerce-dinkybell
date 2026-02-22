@@ -1,7 +1,8 @@
 package com.dinkybell.ecommerce.authentication.service;
 
 import java.time.LocalDateTime;
-import java.util.UUID;
+
+import com.dinkybell.ecommerce.shared.util.SecureTokenGenerator;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -100,7 +101,7 @@ public class UserRegistrationService {
      */
     public void createConfirmationToken(UserAuthentication userAuthentication) {
 
-        String emailConfirmToken = UUID.randomUUID().toString(); //TODO: Consider using a more secure token generation strategy if needed
+        String emailConfirmToken = SecureTokenGenerator.generateShortToken(); // 128-bit token for short-lived email confirmation (5-15 min)
 
         userAuthentication.setEmailConfirmToken(emailConfirmToken);
         userAuthentication.setEmailConfirmTokenExpiry(LocalDateTime.now().plusMinutes(5));
