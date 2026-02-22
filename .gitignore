@@ -92,3 +92,7 @@ jacoco.exec
 
 # Backup and git
 backup-repo/
+
+# Github files
+.github/
+.gitattributes
