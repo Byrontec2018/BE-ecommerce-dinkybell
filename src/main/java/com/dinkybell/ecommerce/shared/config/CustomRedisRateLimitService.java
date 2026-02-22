@@ -47,86 +47,112 @@ public class CustomRedisRateLimitService {
      * @param windowSeconds Time window duration in seconds
      * @return true if request is allowed, false if rate limit exceeded
      */
+    @SuppressWarnings("null")
     public boolean isAllowed(String key, int maxRequests, long windowSeconds) {
-        try {
 
-            String redisKey = RATE_LIMIT_PREFIX + key;
+        try {           
+
+            String redisKey = RATE_LIMIT_PREFIX + key;            
+           
+            String value = redisTemplate.opsForValue().get(redisKey);
             
-            // Get current count
-            String currentCountStr = redisTemplate.opsForValue().get(redisKey);
-            
-            int currentCount = currentCountStr != null ? Integer.parseInt(currentCountStr) : 0;
+            int currentCount = value != null ? Integer.parseInt(value) : 0;
             
             if (currentCount >= maxRequests) {
                 log.warn("Rate limit exceeded for key: {}, current count: {}, max: {}", 
                            key, currentCount, maxRequests);
                 return false;
             }
+
+            long updatedCount;            
             
-            // Increment counter
             if (currentCount == 0) {
-                // First request in window - set with expiration
-                redisTemplate.opsForValue().set(redisKey, "1", Duration.ofSeconds(windowSeconds));
+                Duration duration = Duration.ofSeconds(windowSeconds);
+                redisTemplate.opsForValue().set(redisKey, "1", duration);
+                updatedCount = 1;
             } else {
-                // Increment existing counter
-                redisTemplate.opsForValue().increment(redisKey);
-                
-                // Ensure expiration is set (defensive programming)
+                updatedCount = redisTemplate.opsForValue().increment(redisKey);
                 Long ttl = redisTemplate.getExpire(redisKey);
                 if (ttl == null || ttl == -1) {
-                    redisTemplate.expire(redisKey, Duration.ofSeconds(windowSeconds));
+                    Duration duration = Duration.ofSeconds(windowSeconds);
+                    redisTemplate.expire(redisKey, duration);
                 }
             }
             
             log.debug("Rate limit check passed for key: {}, count: {}/{}", 
-                        key, currentCount + 1, maxRequests);
+                        key, 
+                        updatedCount, 
+                        maxRequests
+            );
+
             return true;
             
         } catch (Exception e) {
-            log.error("Error checking rate limit for key: {}", key, e);
-            // Fail open - allow request if Redis is down
+
+            log.error("Error checking rate limit for key: {}", key, e);           
             return true;
+
         }
+
     }
 
     /**
      * Gets the current count for a rate limiting key.
      */
     public int getCurrentCount(String key) {
+
         try {
+
             String redisKey = RATE_LIMIT_PREFIX + key;
-            String currentCountStr = redisTemplate.opsForValue().get(redisKey);
-            return currentCountStr != null ? Integer.parseInt(currentCountStr) : 0;
+            String value = redisTemplate.opsForValue().get(redisKey);
+            return value != null ? Integer.parseInt(value) : 0;
+
         } catch (Exception e) {
+
             log.error("Error getting current count for key: {}", key, e);
             return 0;
+
         }
+
     }
 
     /**
      * Gets the remaining time until the rate limit window resets.
      */
     public long getTimeToReset(String key) {
+
         try {
+
             String redisKey = RATE_LIMIT_PREFIX + key;
             Long ttl = redisTemplate.getExpire(redisKey, TimeUnit.SECONDS);
             return ttl != null && ttl > 0 ? ttl : 0;
+
         } catch (Exception e) {
+
             log.error("Error getting TTL for key: {}", key, e);
             return 0;
+
         }
+
     }
 
     /**
      * Manually resets the rate limit for a given key.
      */
     public void resetLimit(String key) {
+
         try {
+
             String redisKey = RATE_LIMIT_PREFIX + key;
             redisTemplate.delete(redisKey);
             log.info("Rate limit reset for key: {}", key);
+
         } catch (Exception e) {
+
             log.error("Error resetting rate limit for key: {}", key, e);
+
         }
+
     }
+
 }

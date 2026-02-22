@@ -14,7 +14,7 @@ import com.dinkybell.ecommerce.authentication.dto.PasswordResetConfirmDTO;
 import com.dinkybell.ecommerce.authentication.dto.PasswordResetRequestDTO;
 import com.dinkybell.ecommerce.authentication.dto.TokenRequestDTO;
 import com.dinkybell.ecommerce.authentication.dto.UserAuthenticationRequestDTO;
-import com.dinkybell.ecommerce.authentication.service.UserLoginService;
+import com.dinkybell.ecommerce.authentication.service.AuthService;
 import com.dinkybell.ecommerce.authentication.service.PasswordResetService;
 import com.dinkybell.ecommerce.authentication.service.UserRegistrationService;
 import lombok.RequiredArgsConstructor;
@@ -33,9 +33,9 @@ import jakarta.validation.Valid;
 @RequestMapping("/api/v1/auth")
 @RequiredArgsConstructor
 @Slf4j
-public class UserAthenticationController {
+public class UserAuthenticationController {
     
-    private final UserLoginService userLoginService;
+    private final AuthService userLoginService;
     private final UserRegistrationService userRegistrationService;
     private final PasswordResetService passwordResetService;
 
@@ -125,11 +125,6 @@ public class UserAthenticationController {
     @RateLimiter(name = "confirmResetPassword")
     @PostMapping("/reset-password")
     public ResponseEntity<?> resetPassword(@RequestBody @Valid PasswordResetConfirmDTO resetDTO) {
-    //@GetMapping("/reset-password")
-    //public ResponseEntity<?> resetPassword(@RequestParam String token, @RequestParam String newPassword) {
-        //PasswordResetConfirmDTO resetDTO = new PasswordResetConfirmDTO();
-        //resetDTO.setToken(token);
-        //resetDTO.setNewPassword(newPassword);
         return passwordResetService.resetPassword(resetDTO);
     }    
  

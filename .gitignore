@@ -43,6 +43,7 @@ Desktop.ini
 # Environment & Bash files
 .env
 *.env
+!.env.example
 .sh
 *.sh
 
@@ -67,3 +68,10 @@ jacoco.exec
 !**/src/**/.mvn/
 mvnw
 mvnw.cmd
+
+# Keystore files (if you use them for email or other services)
+*.keystore
+*.jceks
+
+# Ignore local backups
+backup-repo/

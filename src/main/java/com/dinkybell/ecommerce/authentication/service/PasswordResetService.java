@@ -1,7 +1,8 @@
 package com.dinkybell.ecommerce.authentication.service;
 
 import java.time.LocalDateTime;
-import java.util.UUID;
+
+import com.dinkybell.ecommerce.shared.util.SecureTokenGenerator;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -54,7 +55,7 @@ public class PasswordResetService {
                     null, null);
         }
 
-        String resetToken = UUID.randomUUID().toString();
+        String resetToken = SecureTokenGenerator.generateShortToken(); // 128-bit token for password reset (15 min validity)
 
         authentication.setResetPasswordToken(resetToken);
         authentication.setResetPasswordTokenExpiry(LocalDateTime.now().plusMinutes(15));

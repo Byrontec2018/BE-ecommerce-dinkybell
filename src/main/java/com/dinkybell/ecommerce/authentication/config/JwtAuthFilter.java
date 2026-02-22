@@ -105,19 +105,19 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         // Extract token by removing "Bearer" prefix
         final String token = authHeader.substring(7);
         
-        log.info("extracted from Authorization header");
+        log.info("Token extracted from Authorization header");
         
         try {
 
             // Check if token is expired
             if (jwtUtil.isTokenExpired(token)) {
 
-                log.info("Token scaduto o non valido - restituisco risposta 401 con header specifico");
+                log.info("Expired or invalid token - returning 401 response with specific header");
 
                 // Add a specific header to indicate token expiration
                 response.setHeader("X-Token-Expired", "true");
                 entryPoint.commence(request, response,
-                    new CredentialsExpiredException("Token JWT scaduto. È necessario richiedere un nuovo token."));
+                    new CredentialsExpiredException("JWT token expired. A new token is required."));
                 return;
                 
             } 
@@ -125,16 +125,16 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             // Extract JWT ID to check if token is blacklisted
             String jti = jwtUtil.extractJti(token);
 
-            log.info("JWT ID estratto: {}", jti);
+            log.info("JWT ID extracted: {}", jti);
 
             if (tokenBlacklistService.isBlacklisted(jti)) {
 
                 // Token is blacklisted (user logged out), return 401 with specific header                
-                log.info("Token è in blacklist - restituisco risposta 401 con header specifico");
+                log.info("Token is blacklisted - returning 401 response with specific header");
 
                 response.setHeader("X-Token-Blacklisted", "true");
                 entryPoint.commence(request, response,
-                    new BadCredentialsException("Token JWT invalidato (logout). È necessario effettuare nuovamente il login."));
+                    new BadCredentialsException("JWT token invalidated (logout). Login is required again."));
                 return;
 
             }                    
@@ -185,20 +185,20 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             log.warn("JWT signature validation failed: {}", e.getMessage());
                 response.setHeader("X-Token-Invalid", "true");
                 entryPoint.commence(request, response,
-                    new BadCredentialsException("Token JWT non valido. È necessario effettuare nuovamente il login."));
+                    new BadCredentialsException("Invalid JWT token. Login is required again."));
                 return;
         } catch (io.jsonwebtoken.ExpiredJwtException e) {
             // Token is expired
             log.info("JWT expired at {}, current time: {}", e.getClaims().getExpiration(), new Date());
                 response.setHeader("X-Token-Expired", "true");
                 entryPoint.commence(request, response,
-                    new CredentialsExpiredException("Token JWT scaduto. È necessario richiedere un nuovo token."));
+                    new CredentialsExpiredException("JWT token expired. A new token is required."));
                 return;
         } catch (Exception e) {
             // Log error and return appropriate response
             log.error("Error processing JWT token", e);
                 entryPoint.commence(request, response,
-                    new BadCredentialsException("Errore di autenticazione"));
+                    new BadCredentialsException("Authentication error"));
                 return;
         } 
         
