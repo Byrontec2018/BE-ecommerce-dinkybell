@@ -75,3 +75,7 @@ mvnw.cmd
 
 # Ignore local backups
 backup-repo/
+
+# Github files
+.github/
+.gitattributes
