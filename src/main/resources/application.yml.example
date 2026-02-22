@@ -94,14 +94,14 @@ management:
 resilience4j:
   ratelimiter:
     instances:
-      # Login endpoint: very restrictive
+     # Login endpoint: very restrictive
       login:
         limitForPeriod: 3
         limitRefreshPeriod: 300s
         timeoutDuration: 0
       # Registration endpoint: even more restrictive
       register:
-        limitForPeriod: 2
+        limitForPeriod: 20 # Allow more registration attempts to accommodate new users, but still limit to prevent abuse
         limitRefreshPeriod: 600s
         timeoutDuration: 0
       # Reset password endpoint: most restrictive
@@ -119,3 +119,18 @@ resilience4j:
         limitForPeriod: 2
         limitRefreshPeriod: 60s
         timeoutDuration: 0
+      # Logout endpoint: moderately restrictive
+      logout:
+        limitForPeriod: 5
+        limitRefreshPeriod: 300s
+        timeoutDuration: 0      # 
+      # Email verification endpoint: restrictive to prevent abuse
+      verifyEmail:
+        limitForPeriod: 5
+        limitRefreshPeriod: 600s
+        timeoutDuration: 0
+      # Resend verification email endpoint: restrictive to prevent abuse
+      resendVerificationEmail:
+        limitForPeriod: 5 
+        limitRefreshPeriod: 600s
+        timeoutDuration: 0  

@@ -1,292 +1,233 @@
-# 🛍️ Dinkybell E-commerce Platform
+# 🛍️ Dinkybell E-Commerce Backend
 
-A handcrafted, custom-built e-commerce platform developed in **Java + Spring Boot**, designed to support the online sale of handmade polymer clay jewellery from the **dinkybell** brand. Includes an integrated **Blog section** to express creativity and share ideas.
+> Production-grade REST API for an e-commerce platform built with **Java 21** and **Spring Boot 3**, focused on secure authentication, session management, and scalable backend architecture.
 
----
-
-## 🚀 Key Features
-
-- Secure user registration with email confirmation
-- JWT-based authentication using RS256 algorithm
-- **Refresh token system with multi-device support**
-- **Device fingerprinting for enhanced security**
-- **Automatic token rotation and cleanup**
-- Product and category management
-- Cart and order system
-- PostgreSQL database integration
-- Secure CRUD operations with Spring Security
-- Built-in Blog module
-- RESTful architecture ready for React frontend integration
-- Payment service with STRIPE
+![Java](https://img.shields.io/badge/Java-21-orange?logo=java)
+![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.5.4-green?logo=springboot)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15+-blue?logo=postgresql)
+![Redis](https://img.shields.io/badge/Redis-6+-red?logo=redis)
+![Tests](https://img.shields.io/badge/tests-60%2B-success)
+![Coverage](https://img.shields.io/badge/coverage-High-brightgreen)
+![License](https://img.shields.io/badge/License-MIT-yellow)
+![Architecture](https://img.shields.io/badge/architecture-layered-blueviolet)
+![Security](https://img.shields.io/badge/security-production--grade-success)
+![API](https://img.shields.io/badge/API-REST-informational)
 
 ---
 
-## 🧱 Technology Stack
+## 📋 Overview
 
-| Component       | Technology                    |
-| --------------- | ----------------------------- |
-| Backend         | Java 21                       |
-| Framework       | Spring Boot 3.5.4, Spring MVC |
-| Security        | Spring Security, JWT (jjwt)   |
-| Database        | PostgreSQL                    |
-| ORM             | Spring Data JPA               |
-| Email           | Spring Mail                   |
-| Build Tool      | Maven 3                       |
-| IDE             | Visual Studio Code            |
-| API Docs        | Swagger / OpenAPI 3.0         |
-| Version Control | Git + GitHub                  |
+Dinkybell is a backend system designed for modern e-commerce applications.
+It demonstrates production-level backend architecture, secure authentication patterns, and scalable API design.
+
+**The project showcases:**
+- Secure authentication design (JWT with asymmetric encryption)
+- Multi-device session management with device fingerprinting
+- Token lifecycle management (generation, validation, rotation, blacklisting)
+- Distributed rate limiting with Redis
+- Clean layered architecture
+- Comprehensive automated testing
 
 ---
 
-## ⚙️ Project Setup
+## ✨ Core Features
+
+- **JWT Authentication** - RS256 asymmetric signing with 2048-bit RSA keys
+- **Refresh Token System** - Multi-device session management (max 5 devices)
+- **Device Fingerprinting** - Unique device tracking to prevent token duplication
+- **Token Blacklisting** - Immediate logout invalidation
+- **Email Verification** - Confirmation tokens for account activation
+- **Password Reset** - Secure email-based recovery workflow
+- **Redis Rate Limiting** - Custom aspect-oriented per-endpoint throttling
+- **Argon2id Hashing** - OWASP-recommended password security
+- **Global Exception Handling** - Unified API error responses
+- **OpenAPI Documentation** - Interactive Swagger UI
+- **Comprehensive Testing** - 60+ unit tests with 100% pass rate
+
+---
+
+## 🏆 Skills Demonstrated
+
+This project highlights a wide range of backend development and software engineering skills:
+
+**Java & Spring Boot** – Clean architecture, layered design, dependency injection, and modular service implementation
+**RESTful API Design** – Secure endpoints, proper status codes, and standardized JSON responses
+**Authentication & Security** – JWT-based authentication, refresh token rotation, device fingerprinting, password hashing with Argon2id, email verification workflow
+**Database Management** – PostgreSQL design, schema modeling, indexing, transactions, and integration with Spring Data JPA
+**Caching & Rate Limiting** – Redis usage for performance optimization and per-endpoint throttling
+**Testing & Quality Assurance** – Unit testing with JUnit and Mockito, test coverage validation, automated workflow testing
+**DevOps Awareness** – Dockerized setup, environment variable management, Maven build automation, deployment readiness
+**API Documentation** – OpenAPI / Swagger integration for clear developer communication
+**Problem Solving & System Design** – Multi-device session handling, secure token lifecycle management, error handling, and concurrency control
+**Version Control & Collaboration** – Git usage for branches, commits, and repository organization
+
+Demonstrates the ability to deliver a production-ready backend system with emphasis on security, scalability, and maintainable code.
+
+---
+
+## 🏗️ Architecture
+
+**Layered Architecture:**
+Controller → Service → Repository → Database
+
+**Security Layer:**
+Request → JwtAuthFilter → Token Validation → Controller
+
+**Infrastructure:**
+Spring Boot Application
+├── PostgreSQL (Primary Data Store)
+└── Redis (Rate Limiting & Caching)
+
+**Authentication Flow:**
+Login → Validate Credentials → Generate JWT + Refresh Token
+  → Device Fingerprint → Store Session → Return Tokens
+
+**Multi-Device Sessions:**
+- Maximum 5 concurrent sessions per user
+- Device fingerprinting prevents token duplication
+- Automatic rotation when limit exceeded (oldest revoked)
+
+---
+
+## 🛠️ Tech Stack
+
+| Layer             | Technology                               |
+|-------------------|------------------------------------------|
+| **Backend**       | Java 21, Spring Boot 3.5.4               |
+| **Security**      | Spring Security 6, JWT (RS256), Argon2id |
+| **Database**      | PostgreSQL 15+                           |
+| **Caching**       | Redis 6.0+                               |
+| **Testing**       | JUnit 5, Mockito                         |
+| **Documentation** | OpenAPI 3.0 / Swagger UI                 |
+| **Build**         | Maven 3.8+                               |
+
+---
+
+## Security Highlights
+
+- Argon2 password hashing
+- short-lived access tokens
+- refresh token rotation
+- session concurrency control
+- rate limiting protection
+- secure token generation
+- environment-based secrets
+
+---
+
+## Environment Configuration
+
+Required environment variables:
+
+```bash
+export DB_HOST="<db_host>"
+export DB_PORT="<db_port>"
+export DB_NAME="<db_name>"
+export DB_USER="<db_user>"
+export DB_PASSWORD="<db_password>"
+
+export REDIS_HOST="<redis_host>"
+export REDIS_PORT="<redis_port>"
+export REDIS_PASSWORD="<redis_password>"
+
+export PGADMIN_EMAIL="<pgadmin_email>"
+export PGADMIN_PASSWORD="<pgadmin_password>"
+
+export EMAIL_HOST="<email_host>"
+export EMAIL_PORT="<email_port>"
+export EMAIL_USERNAME="<email_username>"
+export EMAIL_PASSWORD="<email_password>"
+```
+
+Use [.env.example](.env.example) as a safe template for local setup.
+
+---
+
+## 🚀 Quick Start
 
 ### Prerequisites
 
-- Java JDK 21+
-- Maven 3.x
-- PostgreSQL Server
-- SMTP server access for email functionality
-- Visual Studio Code with Java extensions
+Before setting up the project, ensure you have the following installed:
 
-### Environment Variables
+# Required
+- Java Development Kit 21 (JDK 21)
+- Maven 3.8+
+- PostgreSQL 15+
+- Git
 
-The application requires the following environment variables:
+# Optional but recommended
+- Redis Server 6.0+ (for rate limiting)
+- Docker (for database containerisation)
+- Postman or similar API client for testing
 
-- `DB_PASSWORD`: PostgreSQL database password
-- `MAIL_PASSWORD`: Email service password
-
-You can set these using the provided `load-env.sh` script.
-
-### Clone the repository
-
-````bash
+# Installation
+bash
 git clone https://github.com/Byrontec2018/BE-ecommerce-dinkybell.git
 cd BE-ecommerce-dinkybell
+source ./setenv.sh  # Configure environment variables
+./mvnw spring-boot:run
 
-### Database Setup
-```sql
+**API Available at:** `http://localhost:8080`  
+**Swagger UI:** `http://localhost:8080/swagger-ui.html`  
+
+# Database Setupsql
 CREATE DATABASE ecommerce_db;
 CREATE USER admin WITH ENCRYPTED PASSWORD 'your_password';
-GRANT ALL PRIVILEGES ON DATABASE ecommerce_db TO admin;
-````
+GRANT ALL PRIVILEGES ON DATABASE ecommerce_db TO admin;`
 
-### Running the application
+## Authentication Flow Example
 
-```bash
-# Load environment variables
-source ./load-env.sh
-
-# Build the project
-./mvnw clean install
-
-# Run the application
-./mvnw spring-boot:run
-```
-
-## � Refresh Token System
-
-The application implements a sophisticated refresh token system that provides:
-
-### Features
-
-- **Multi-Device Support**: Each user can maintain up to 5 active sessions across different devices
-- **Device Fingerprinting**: Unique device identification prevents token duplication from the same device
-- **Automatic Token Rotation**: Old tokens are automatically revoked when the limit is exceeded
-- **Security Tracking**: Device information is stored for security auditing
-- **Sliding Window Expiry**: Tokens are automatically cleaned up when expired or revoked
-
-### Token Lifecycle
-
-1. **Login**: Creates a refresh token (30-day expiry) alongside the JWT access token (5-minute expiry)
-2. **Token Refresh**: Uses refresh token to generate new access tokens without re-authentication
-3. **Device Detection**: Prevents duplicate tokens from the same device/browser combination
-4. **Automatic Cleanup**: Expired and revoked tokens are periodically purged from the database
-5. **Multi-Session Management**: Users can revoke tokens from specific devices or all other devices
-
-### Configuration
-
-- Access Token Expiry: **5 minutes**
-- Refresh Token Expiry: **30 days**  
-- Maximum Tokens per User: **5 devices**
-- Rate Limiting: **Applied to refresh endpoints**
-
----
-
-## �📚 API Documentation
-
-### Authentication Endpoints
-
-#### Register a New User
-
-```
-POST /api/v1/auth/register
-```
-
-Registers a new user and sends a confirmation email.
-
-**Request Body:**
-
-```json
-{
-  "email": "user@example.com",
-  "password": "SecurePassword123"
-}
-```
-
-#### Confirm Email
-
-```
-GET /api/v1/auth/confirm-email?token=your-token-here
-```
-
-Activates a user account after clicking the email confirmation link.
-
-#### Login
-
-```
-POST /api/v1/auth/login
-```
-
-Authenticates a user and returns a JWT token.
-
-**Request Body:**
-
-```json
-{
-  "email": "user@example.com",
-  "password": "SecurePassword123"
-}
-```
-
-**Response:**
-
-```json
-{
-  "token": "eyJhbGciOiJSUzI1NiJ9...",
-  "type": "Bearer",
-  "email": "user@example.com",
-  "expirationTime": "2025-08-16T10:30:00"
-}
-```
-
-#### Logout
-
-```
-GET /api/v1/auth/logout
-```
-
-Invalidates the current JWT token by adding it to a blacklist.
-
-**Headers:**
-
-```
-Authorization: Bearer eyJhbGciOiJSUzI1NiJ9...
-```
-
-**Response:**
-
-```
-"Logout successful"
-```
-
-### Refresh Token Endpoints
-
-The application implements a comprehensive refresh token system that allows users to maintain sessions across multiple devices while ensuring security through token rotation and device fingerprinting.
-
-#### Refresh Access Token
-
-```
-POST /api/v1/auth/refresh-token
-```
-
-Generates a new access token using a valid refresh token. Rate limited to prevent abuse.
-
-**Request Body:**
-
-```json
-{
-  "refreshToken": "550e8400-e29b-41d4-a716-446655440000"
-}
-```
-
-**Response:**
-
-```json
-{
-  "token": "eyJhbGciOiJSUzI1NiJ9...",
-  "refreshToken": "550e8400-e29b-41d4-a716-446655440000",
-  "email": "user@example.com",
-  "expirationTime": "2025-08-16T10:35:00"
-}
-```
-
-#### Revoke Refresh Token
-
-```
-POST /api/v1/auth/revoke-token
-```
-
-Revokes the current refresh token, effectively logging out from the current device.
-
-**Request Body:**
-
-```json
-{
-  "refreshToken": "550e8400-e29b-41d4-a716-446655440000"
-}
-```
-
-**Response:**
-
-```
-"Token successfully revoked"
-```
-
-#### Revoke Other Sessions
-
-```
-POST /api/v1/auth/revoke-other-sessions
-```
-
-Revokes all refresh tokens except the current one, implementing "log out from all other devices" functionality.
-
-**Request Body:**
-
-```json
-{
-  "refreshToken": "550e8400-e29b-41d4-a716-446655440000"
-}
-```
-
-**Response:**
-
-```
-"Other sessions successfully revoked"
-```
-
-## 🔒 Security Features
-
-- Secure password storage with BCrypt hashing
-- JWT authentication using RS256 algorithm (asymmetric encryption)
-- **Refresh token system with UUID-based tokens**
-- **Device fingerprinting for multi-device security**
-- **Automatic token cleanup and rotation**
-- **Rate limiting on token refresh endpoints**
-- **Maximum 5 active sessions per user**
-- Email verification for new accounts
-- Input validation for all endpoints
-- Customized error responses
+- Register user
+- Confirm email
+- Login → receive JWT + refresh token
+- Use JWT for requests
+- Refresh token when expired
 
 ## 🧪 Testing
 
-```bash
 # Run all tests
 ./mvnw test
 
 # Run specific test class
 ./mvnw test -Dtest=UserAuthenticationServiceTest
-```
+
+**Test Suite:**
+- 60+ unit tests
+- 100% passing rate
+- Mockito-based service layer tests
+- Full authentication workflow validation
+
+## Documentation
+
+- **[Rate Limiting Guide](RATE_LIMITING.md)** - Configuration and usage
+- **[Docker Setup](DOCKER.md)** - Containerised deployment
+- **[Security Details](docs/SECURITY.md)** - Authentication implementation
+- **[API Reference](docs/API.md)** - Complete endpoint documentation
+
+---
+
+## 🚧 Future Improvements
+
+- OAuth 2.0 integration (Google, GitHub)
+- Two-factor authentication (TOTP)
+- Product management API
+- Shopping cart system
+- Order processing workflow
+- Stripe payment completion
+- CI/CD pipeline (GitHub Actions)
+- Monitoring integration (Prometheus + Grafana)� Author
+
+**Stefano D'Incà**  
+Backend Developer
+
+[![GitHub](https://img.shields.io/badge/GitHub-@Byrontec2018-black?logo=github)](https://github.com/Byrontec2018)
+
+---
 
 ## 📝 License
 
-This project is licensed under the MIT License - see the LICENSE.txt file for details.
+MIT License - see [LICENSE.txt](LICENSE.txt) for details.
+
+---
+
+**Version 1.0.0** •

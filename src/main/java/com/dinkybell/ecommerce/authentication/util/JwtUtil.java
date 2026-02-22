@@ -138,7 +138,6 @@ public class JwtUtil {
                 .parseClaimsJws(token)
                 .getBody()
                 .getExpiration();
-            //return expiration.before(new Date());
             return false; // Valid token not expired
         } catch (io.jsonwebtoken.ExpiredJwtException e) {
             // Token is expired
