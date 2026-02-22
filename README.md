@@ -50,16 +50,16 @@ It demonstrates production-level backend architecture, secure authentication pat
 
 This project highlights a wide range of backend development and software engineering skills:
 
-**Java & Spring Boot** – Clean architecture, layered design, dependency injection, and modular service implementation
-**RESTful API Design** – Secure endpoints, proper status codes, and standardized JSON responses
-**Authentication & Security** – JWT-based authentication, refresh token rotation, device fingerprinting, password hashing with Argon2id, email verification workflow
-**Database Management** – PostgreSQL design, schema modeling, indexing, transactions, and integration with Spring Data JPA
-**Caching & Rate Limiting** – Redis usage for performance optimization and per-endpoint throttling
-**Testing & Quality Assurance** – Unit testing with JUnit and Mockito, test coverage validation, automated workflow testing
-**DevOps Awareness** – Dockerized setup, environment variable management, Maven build automation, deployment readiness
-**API Documentation** – OpenAPI / Swagger integration for clear developer communication
-**Problem Solving & System Design** – Multi-device session handling, secure token lifecycle management, error handling, and concurrency control
-**Version Control & Collaboration** – Git usage for branches, commits, and repository organization
+- **Java & Spring Boot** – Clean architecture, layered design, dependency injection, and modular service implementation  
+- **RESTful API Design** – Secure endpoints, proper status codes, and standardized JSON responses  
+- **Authentication & Security** – JWT-based authentication, refresh token rotation, device fingerprinting, password hashing with Argon2id, email verification workflow  
+- **Database Management** – PostgreSQL design, schema modeling, indexing, transactions, and integration with Spring Data JPA  
+- **Caching & Rate Limiting** – Redis usage for performance optimization and per-endpoint throttling  
+- **Testing & Quality Assurance** – Unit testing with JUnit and Mockito, test coverage validation, automated workflow testing  
+- **DevOps Awareness** – Dockerized setup, environment variable management, Maven build automation, deployment readiness  
+- **API Documentation** – OpenAPI / Swagger integration for clear developer communication  
+- **Problem Solving & System Design** – Multi-device session handling, secure token lifecycle management, error handling, and concurrency control  
+- **Version Control & Collaboration** – Git usage for branches, commits, and repository organization  
 
 Demonstrates the ability to deliver a production-ready backend system with emphasis on security, scalability, and maintainable code.
 
@@ -67,25 +67,18 @@ Demonstrates the ability to deliver a production-ready backend system with empha
 
 ## 🏗️ Architecture
 
-**Layered Architecture:**
-Controller → Service → Repository → Database
-
-**Security Layer:**
-Request → JwtAuthFilter → Token Validation → Controller
-
-**Infrastructure:**
-Spring Boot Application
-├── PostgreSQL (Primary Data Store)
-└── Redis (Rate Limiting & Caching)
-
-**Authentication Flow:**
-Login → Validate Credentials → Generate JWT + Refresh Token
-  → Device Fingerprint → Store Session → Return Tokens
-
-**Multi-Device Sessions:**
-- Maximum 5 concurrent sessions per user
-- Device fingerprinting prevents token duplication
-- Automatic rotation when limit exceeded (oldest revoked)
+- **Layered Architecture:**  Controller → Service → Repository → Database    
+- **Security Layer:** Request → JwtAuthFilter → Token Validation → Controller  
+- **Infrastructure:**  
+Spring Boot Application  
+├── PostgreSQL (Primary Data Store)    
+└── Redis (Rate Limiting & Caching)  
+- **Authentication Flow:**
+  Login → Validate Credentials → Generate JWT + Refresh Token → Device Fingerprint → Store Session → Return Tokens  
+- **Multi-Device Sessions:**  
+  - Maximum 5 concurrent sessions per user
+  - Device fingerprinting prevents token duplication
+  - Automatic rotation when limit exceeded (oldest revoked)
 
 ---
 
@@ -149,33 +142,34 @@ Use [.env.example](.env.example) as a safe template for local setup.
 
 Before setting up the project, ensure you have the following installed:
 
-# Required
+#### Required
 - Java Development Kit 21 (JDK 21)
 - Maven 3.8+
 - PostgreSQL 15+
 - Git
 
-# Optional but recommended
+#### Optional but recommended
 - Redis Server 6.0+ (for rate limiting)
 - Docker (for database containerisation)
 - Postman or similar API client for testing
 
-# Installation
-bash
+### Installation
+```bash
 git clone https://github.com/Byrontec2018/BE-ecommerce-dinkybell.git
 cd BE-ecommerce-dinkybell
 source ./setenv.sh  # Configure environment variables
 ./mvnw spring-boot:run
+```
 
-**API Available at:** `http://localhost:8080`  
-**Swagger UI:** `http://localhost:8080/swagger-ui.html`  
+**API Available at:** http://localhost:8080  
+**Swagger UI:** http://localhost:8080/swagger-ui.html
 
-# Database Setupsql
+### Database Setupsql
 CREATE DATABASE ecommerce_db;
 CREATE USER admin WITH ENCRYPTED PASSWORD 'your_password';
 GRANT ALL PRIVILEGES ON DATABASE ecommerce_db TO admin;`
 
-## Authentication Flow Example
+### Authentication Flow Example
 
 - Register user
 - Confirm email
@@ -185,11 +179,15 @@ GRANT ALL PRIVILEGES ON DATABASE ecommerce_db TO admin;`
 
 ## 🧪 Testing
 
-# Run all tests
+### Run all tests
+```bash
 ./mvnw test
+```
 
-# Run specific test class
+### Run specific test class
+```bash
 ./mvnw test -Dtest=UserAuthenticationServiceTest
+```
 
 **Test Suite:**
 - 60+ unit tests
