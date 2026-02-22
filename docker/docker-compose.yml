@@ -18,23 +18,7 @@ services:
       test: ["CMD-SHELL", "pg_isready -U ${DB_USER}"]
       interval: 10s
       timeout: 5s
-      retries: 5
-
-  # PgAdmin4 Service (PostgreSQL Admin Interface)
-  # pgadmin:
-  #   image: dpage/pgadmin4:latest
-  #   container_name: dinkybell-pgadmin
-  #   restart: unless-stopped
-  #   ports:
-  #     - "5050:80"
-  #   environment:
-  #     - PGADMIN_DEFAULT_EMAIL=${PGADMIN_EMAIL}
-  #     - PGADMIN_DEFAULT_PASSWORD=${PGADMIN_PASSWORD}
-  #     - PGADMIN_CONFIG_SERVER_MODE=False
-  #   depends_on:
-  #     - postgres
-  #   networks:
-  #     - dinkybell-network
+      retries: 5  
 
   # Redis Service
   redis:
@@ -57,21 +41,7 @@ services:
       test: ["CMD", "redis-cli", "--raw", "ping"]
       interval: 10s
       timeout: 5s
-      retries: 5
-
-  # Redis Commander Service (Redis Admin Interface)
-  # redis-commander:
-  #   image: rediscommander/redis-commander:latest
-  #   container_name: dinkybell-redis-ui
-  #   restart: unless-stopped
-  #   ports:
-  #     - "8081:8081"
-  #   environment:
-  #     - REDIS_HOSTS=local:dinkybell-redis:6379:0:${REDIS_PASSWORD}
-  #   depends_on:
-  #     - redis
-  #   networks:
-  #     - dinkybell-network
+      retries: 5  
 
 volumes:
   postgres_data:
