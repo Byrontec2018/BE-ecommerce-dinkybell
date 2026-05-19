@@ -22,9 +22,11 @@ import com.auth_service.authentication.handler.JwtAuthenticationEntryPoint;
 import com.auth_service.authentication.repository.UserAuthenticationRepository;
 import com.auth_service.authentication.service.TokenBlacklistService;
 import com.auth_service.authentication.util.JwtUtil;
+import com.auth_service.shared.config.SecurityConstants;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.util.AntPathMatcher;
 
 import io.jsonwebtoken.Claims;
 import jakarta.servlet.FilterChain;
@@ -48,12 +50,14 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     private final UserAuthenticationRepository userAuthRepository;
     private final TokenBlacklistService tokenBlacklistService;
     private final JwtAuthenticationEntryPoint entryPoint;
+    private final AntPathMatcher pathMatcher = new AntPathMatcher();
 
     /**
      * Determines if the current request should not be filtered by this JWT filter.
      * 
      * This method checks if the request path matches any of the public endpoints
-     * that do not require authentication.
+     * defined in SecurityConstants, ensuring consistency with SecurityConfig rules.
+     * Uses AntPathMatcher to support wildcard patterns like /api/v1/auth/**
      * 
      * @param request The HTTP request
      * @return true if the request should not be filtered, false otherwise
@@ -63,15 +67,12 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
         String path = request.getServletPath();
 
-        return path.startsWith("/api/v1/auth/") ||
-               path.startsWith("/api/v1/public/") ||
-               path.equals("/actuator/health") ||
-               path.equals("/swagger-ui.html") ||
-               path.startsWith("/swagger-ui/") ||
-               path.equals("/v3/api-docs") ||
-               path.startsWith("/v3/api-docs/") ||
-               path.equals("/v3/api-docs.yaml") ||
-               path.equals("/users/public");
+        for (String pattern : SecurityConstants.PUBLIC_PATHS) {
+            if (pathMatcher.match(pattern, path)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**

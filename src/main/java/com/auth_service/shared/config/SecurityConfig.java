@@ -19,6 +19,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import com.auth_service.authentication.config.JwtAuthFilter;
 import com.auth_service.authentication.handler.JwtAuthenticationEntryPoint;
 
+
 import lombok.RequiredArgsConstructor;
 
 /**
@@ -106,12 +107,8 @@ public class SecurityConfig {
             
             // Configure authorization rules
             .authorizeHttpRequests(auth -> auth
-                // Public endpoints
-                .requestMatchers("/api/v1/auth/**").permitAll()
-                .requestMatchers("/api/v1/public/**").permitAll()
-                .requestMatchers("/actuator/health").permitAll()
-                .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs", "/v3/api-docs/**", "/v3/api-docs.yaml").permitAll()
-                .requestMatchers("/users/public").permitAll() // Allow public access to user profiles TEST
+                // Public endpoints (centralized in SecurityConstants to maintain consistency with JwtAuthFilter)
+                .requestMatchers(SecurityConstants.PUBLIC_PATHS).permitAll()
                 // Protected endpoints
                 .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
                 .anyRequest().authenticated()
