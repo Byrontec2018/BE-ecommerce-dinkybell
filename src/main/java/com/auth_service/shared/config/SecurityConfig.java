@@ -6,6 +6,8 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import java.util.Arrays;
+import java.util.Objects;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.lang.NonNull;
@@ -39,6 +41,9 @@ public class SecurityConfig {
     private final JwtAuthFilter jwtAuthFilter;
     private final JwtAuthenticationEntryPoint entryPoint;
 
+    @org.springframework.beans.factory.annotation.Value("${app.cors.allowed-origins:http://localhost:8080}")
+    private String allowedOrigins;
+
     /**
      * Creates the primary password encoder bean using modern Argon2id algorithm.
      * 
@@ -59,13 +64,12 @@ public class SecurityConfig {
     public class CorsConfig implements WebMvcConfigurer {
         @Override
         public void addCorsMappings(@NonNull CorsRegistry registry) {
+            String[] origins = Arrays.stream(allowedOrigins.split(","))
+                    .map(String::trim)
+                    .filter(origin -> !origin.isEmpty())
+                    .toArray(String[]::new);
             registry.addMapping("/api/**")
-                    .allowedOrigins("http://192.168.1.176:8080/api/v1/auth/*")
-                    .allowedOrigins("http://localhost:8080/api/v1/auth/*")
-                    .allowedOrigins("http://192.168.1.176:8080/swagger-ui/**")
-                    .allowedOrigins("http://localhost:8080/swagger-ui/**")
-                    .allowedOrigins("http://192.168.1.176:8080//v3/api-docs/**")
-                    .allowedOrigins("http://localhost:8080/v3/api-docs/**")
+                .allowedOrigins(Objects.requireNonNull(origins))
                     .allowedMethods("GET", "POST", "PUT", "DELETE")
                     .allowedHeaders("*")
                     .allowCredentials(true);
@@ -106,7 +110,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/v1/auth/**").permitAll()
                 .requestMatchers("/api/v1/public/**").permitAll()
                 .requestMatchers("/actuator/health").permitAll()
-                .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
+                .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs", "/v3/api-docs/**", "/v3/api-docs.yaml").permitAll()
                 .requestMatchers("/users/public").permitAll() // Allow public access to user profiles TEST
                 // Protected endpoints
                 .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")

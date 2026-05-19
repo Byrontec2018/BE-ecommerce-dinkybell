@@ -24,15 +24,17 @@ public class EmailNotificationService {
     @Value("${spring.mail.username}")
     private String fromEmail;
 
+    @Value("${app.email.base-url:http://localhost:8080}")
+    private String baseUrl;
+
     /**
      * Sends a confirmation email to the user with a verification link.
      *
      * @param userAuthentication The user authentication entity
-     * @return APIResponseDTO with success or error details
      */    
     public void sendConfirmationEmail(UserAuthentication userAuthentication) {
        
-        String confirmationLink = "http://192.168.1.176:8080/api/v1/auth/confirm-email?token="
+        String confirmationLink = baseUrl + "/api/v1/auth/confirm-email?token="
                 + userAuthentication.getEmailConfirmToken();
 
         SimpleMailMessage message = new SimpleMailMessage();
@@ -58,7 +60,7 @@ public class EmailNotificationService {
      */
     public String sendPasswordResetEmail(UserAuthentication authentication, String resetToken) {
         try {
-            String resetLink = "http://192.168.1.176:8080/reset-password?token=" + resetToken;
+            String resetLink = baseUrl + "/reset-password?token=" + resetToken;
 
             SimpleMailMessage message = new SimpleMailMessage();
             message.setFrom(fromEmail);
