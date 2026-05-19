@@ -8,11 +8,11 @@
 		<version>3.5.4</version>
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
-	<groupId>com.dinkybell</groupId>
-	<artifactId>ecommerce</artifactId>
+	<groupId>com.auth_service</groupId>
+	<artifactId>be-auth-service</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>ecommerce</name>
-	<description>API RestFul per piattaforma E-commerce di Dinkybell</description>
+	<name>BE-Auth-Service</name>
+	<description>Production-ready authentication and session management service</description>
 	<url/>
 	<licenses>
 		<license/>
@@ -148,11 +148,13 @@
 			<artifactId>spring-boot-starter-test</artifactId>
 			<scope>test</scope>
 		</dependency>
+		
 		<dependency>
 			<groupId>org.springframework.security</groupId>
 			<artifactId>spring-security-test</artifactId>
 			<scope>test</scope>
 		</dependency>
+
 	</dependencies>
 
 	<build>

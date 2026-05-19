@@ -2,7 +2,7 @@ services:
   # PostgreSQL Service
   postgres:
     image: postgres:15-alpine
-    container_name: dinkybell-postgres
+    container_name: authservice-postgres
     restart: unless-stopped
     ports:
       - "5432:5432"
@@ -13,7 +13,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
-      - dinkybell-network
+      - authservice-network
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${DB_USER}"]
       interval: 10s
@@ -23,7 +23,7 @@ services:
   # Redis Service
   redis:
     image: redis:7-alpine
-    container_name: dinkybell-redis
+    container_name: authservice-redis
     restart: unless-stopped
     ports:
       - "6379:6379"
@@ -36,7 +36,7 @@ services:
     environment:
       - REDIS_PASSWORD=${REDIS_PASSWORD}
     networks:
-      - dinkybell-network
+      - authservice-network
     healthcheck:
       test: ["CMD", "redis-cli", "--raw", "ping"]
       interval: 10s
@@ -50,5 +50,5 @@ volumes:
     driver: local
 
 networks:
-  dinkybell-network:
+  authservice-network:
     driver: bridge

@@ -1,6 +1,6 @@
 # 📡 API Documentation
 
-Complete API reference for Dinkybell E-Commerce Backend.
+Complete API reference for Authentication Service Backend.
 
 ---
 
@@ -22,7 +22,7 @@ Complete API reference for Dinkybell E-Commerce Backend.
 http://localhost:8080/api/v1
 ```
 
-**Production:** `https://api.dinkybell.com/api/v1`
+**Production:** `https://api.auth-service.com/api/v1`
 
 ### Authentication Header
 
@@ -275,24 +275,19 @@ curl -X GET http://localhost:8080/api/v1/auth/logout \
 
 Obtain a new JWT using a valid refresh token.
 
-**Endpoint:** `POST /refresh-token`
+**Endpoint:** `POST /auth/refresh-token`
 
-**Rate Limit:** 5 requests per minute (per refresh token)
+**Rate Limit:** 2 requests per minute
 
-**Request Body:**
-```json
-{
-  "refreshToken": "a7c4d2e9-f1b3-4c8a-9e2d-5b7c3a1f8e6d"
-}
+**Authorization Header:**
+```http
+Authorization: Bearer <refresh_token>
 ```
 
 **Example:**
 ```bash
-curl -X POST http://localhost:8080/api/v1/refresh-token \
-  -H "Content-Type: application/json" \
-  -d '{
-    "refreshToken": "a7c4d2e9-f1b3-4c8a-9e2d-5b7c3a1f8e6d"
-  }'
+curl -X POST http://localhost:8080/api/v1/auth/refresh-token \
+  -H "Authorization: Bearer <refresh_token>"
 ```
 
 **Success Response (200 OK):**
@@ -330,24 +325,19 @@ curl -X POST http://localhost:8080/api/v1/refresh-token \
 
 Manually invalidate a specific refresh token.
 
-**Endpoint:** `POST /revoke-token`
+**Endpoint:** `POST /auth/revoke-token`
 
-**Rate Limit:** None
+**Rate Limit:** Configurable (deployment policy)
 
-**Request Body:**
-```json
-{
-  "refreshToken": "a7c4d2e9-f1b3-4c8a-9e2d-5b7c3a1f8e6d"
-}
+**Authorization Header:**
+```http
+Authorization: Bearer <refresh_token>
 ```
 
 **Example:**
 ```bash
-curl -X POST http://localhost:8080/api/v1/revoke-token \
-  -H "Content-Type: application/json" \
-  -d '{
-    "refreshToken": "a7c4d2e9-f1b3-4c8a-9e2d-5b7c3a1f8e6d"
-  }'
+curl -X POST http://localhost:8080/api/v1/auth/revoke-token \
+  -H "Authorization: Bearer <refresh_token>"
 ```
 
 **Success Response (200 OK):**
@@ -375,24 +365,19 @@ curl -X POST http://localhost:8080/api/v1/revoke-token \
 
 Log out from all devices except the current one.
 
-**Endpoint:** `POST /revoke-other-sessions`
+**Endpoint:** `POST /auth/revoke-other-sessions`
 
-**Rate Limit:** None
+**Rate Limit:** Configurable (deployment policy)
 
-**Request Body:**
-```json
-{
-  "refreshToken": "a7c4d2e9-f1b3-4c8a-9e2d-5b7c3a1f8e6d"
-}
+**Authorization Header:**
+```http
+Authorization: Bearer <refresh_token>
 ```
 
 **Example:**
 ```bash
-curl -X POST http://localhost:8080/api/v1/revoke-other-sessions \
-  -H "Content-Type: application/json" \
-  -d '{
-    "refreshToken": "a7c4d2e9-f1b3-4c8a-9e2d-5b7c3a1f8e6d"
-  }'
+curl -X POST http://localhost:8080/api/v1/auth/revoke-other-sessions \
+  -H "Authorization: Bearer <refresh_token>"
 ```
 
 **Success Response (200 OK):**
@@ -472,7 +457,7 @@ Subject: Password Reset Request
 
 Hello,
 
-You requested a password reset for your Dinkybell account.
+You requested a password reset for your account.
 
 Click here to reset your password:
 http://localhost:8080/reset-password?token=abc123def456
@@ -497,7 +482,7 @@ Complete password reset with token.
 
 **Endpoint:** `POST /auth/reset-password`
 
-**Rate Limit:** None (single-use token)
+**Rate Limit:** 2 requests per 10 minutes
 
 **Request Body:**
 ```json
@@ -645,7 +630,7 @@ echo "Refresh Token: $REFRESH_TOKEN"
 
 **Step 5: Access Protected Endpoint**
 ```bash
-curl -X GET http://localhost:8080/api/v1/users/profile \
+curl -X GET http://localhost:8080/users/profile \
   -H "Authorization: Bearer $JWT"
 ```
 
@@ -653,9 +638,8 @@ curl -X GET http://localhost:8080/api/v1/users/profile \
 ```bash
 # After 5 minutes, JWT expires
 # Use refresh token to get new JWT
-curl -X POST http://localhost:8080/api/v1/refresh-token \
-  -H "Content-Type: application/json" \
-  -d "{\"refreshToken\":\"$REFRESH_TOKEN\"}" | jq
+curl -X POST http://localhost:8080/api/v1/auth/refresh-token \
+  -H "Authorization: Bearer $REFRESH_TOKEN" | jq
 ```
 
 **Step 7: Logout**
@@ -698,15 +682,13 @@ echo "3 devices logged in"
 
 # Revoke other sessions from Device 1
 DEVICE1_TOKEN=$(cat device1_token.txt)
-curl -X POST http://localhost:8080/api/v1/revoke-other-sessions \
-  -H "Content-Type: application/json" \
-  -d "{\"refreshToken\":\"$DEVICE1_TOKEN\"}" | jq
+curl -X POST http://localhost:8080/api/v1/auth/revoke-other-sessions \
+  -H "Authorization: Bearer $DEVICE1_TOKEN" | jq
 
 # Try to use Device 2 token (should fail)
 DEVICE2_TOKEN=$(cat device2_token.txt)
-curl -X POST http://localhost:8080/api/v1/refresh-token \
-  -H "Content-Type: application/json" \
-  -d "{\"refreshToken\":\"$DEVICE2_TOKEN\"}" | jq
+curl -X POST http://localhost:8080/api/v1/auth/refresh-token \
+  -H "Authorization: Bearer $DEVICE2_TOKEN" | jq
 ```
 
 ---
@@ -780,7 +762,7 @@ Import this JSON into Postman for easy testing:
 ```json
 {
   "info": {
-    "name": "Dinkybell E-Commerce API",
+    "name": "Authentication Service API",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -847,10 +829,10 @@ Import this JSON into Postman for easy testing:
 
 - **Swagger UI:** http://localhost:8080/swagger-ui.html
 - **OpenAPI Spec:** http://localhost:8080/v3/api-docs
-- **Rate Limiting Guide:** [RATE_LIMITING.md](../RATE_LIMITING.md)
+- **Rate Limiting Guide:** [RATE_LIMITING.md](RATE_LIMITING.md)
 - **Security Details:** [SECURITY.md](SECURITY.md)
 
 ---
 
-**Last Updated:** February 22, 2026  
+**Last Updated:** May 19, 2026  
 **API Version:** 1.0.0

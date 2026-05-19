@@ -1,6 +1,6 @@
-# Docker Setup for Dinkybell E-commerce
+# Docker Setup for Authentication Service backend
 
-This guide explains how to set up and use Docker containers for the Dinkybell E-commerce backend development environment.
+This guide explains how to set up and use Docker containers for the Authentication Service backend development environment.
 
 ## Components
 
